@@ -1,0 +1,30 @@
+name: flutter
+summary: Flutter SDK for Dart-based cross-platform apps.
+verify: command -v flutter && command -v dart
+version_check: flutter --version 2>/dev/null | head -n 1 | awk '{print $2}'
+cast:
+  default: git
+  channels:
+    git:
+      type: shell
+      summary: Official git clone (stable channel) — `flutter upgrade` works after.
+      run: |
+        software="${SOFTWARE_DIR:-$HOME/Software}"
+        target="$software/Flutter"
+        mkdir -p "$software" "$HOME/.local/bin"
+        if [ -d "$target/.git" ]; then
+          git -C "$target" pull --ff-only
+        else
+          rm -rf "$target"
+          git clone --depth 1 -b stable https://github.com/flutter/flutter.git "$target"
+        fi
+        ln -sf "$target/bin/flutter" "$HOME/.local/bin/flutter"
+        ln -sf "$target/bin/dart" "$HOME/.local/bin/dart"
+        # First call downloads the bundled Dart SDK.
+        "$target/bin/flutter" --version >/dev/null
+      version_hint: latest
+category: development
+tags: [language, dart, mobile, cross-platform]
+homepage: https://flutter.dev
+provides:
+  binaries: [flutter, dart]

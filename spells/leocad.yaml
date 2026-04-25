@@ -1,0 +1,33 @@
+name: leocad
+summary: LEGO CAD design and rendering.
+verify: command -v leocad
+version_check: leocad --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n 1
+cast:
+  default: appimage
+  channels:
+    appimage:
+      type: shell
+      summary: Latest AppImage from GitHub releases into $SOFTWARE_DIR/LeoCAD.
+      run: |
+        software="${SOFTWARE_DIR:-$HOME/Software}"
+        target_dir="$software/LeoCAD"
+        mkdir -p "$target_dir" "$HOME/.local/bin"
+        url=$(curl -s https://api.github.com/repos/leozide/leocad/releases/latest \
+              | grep -oE '"browser_download_url": "[^"]+x86_64\.AppImage"' \
+              | head -n 1 \
+              | sed -E 's/.*"(http[^"]+)"$/\1/')
+        if [ -z "$url" ]; then
+          echo "Couldn't find a LeoCAD AppImage URL on GitHub releases" >&2
+          exit 1
+        fi
+        # Drop any older AppImage in the dir; keep just the latest.
+        rm -f "$target_dir"/*.AppImage
+        curl -fL -o "$target_dir/$(basename "$url")" "$url"
+        chmod +x "$target_dir"/*.AppImage
+        ln -sf "$target_dir/$(basename "$url")" "$HOME/.local/bin/leocad"
+      version_hint: latest
+category: development
+tags: [cad, lego, modeling]
+homepage: https://www.leocad.org
+provides:
+  binaries: [leocad]

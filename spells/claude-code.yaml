@@ -1,0 +1,22 @@
+name: claude-code
+summary: Anthropic's Claude Code CLI for AI-assisted development.
+verify: command -v claude
+version_check: claude --version 2>/dev/null | head -n 1 | awk '{print $1}'
+cast:
+  default: native
+  channels:
+    native:
+      type: shell
+      summary: Standalone installer from claude.ai (recommended — no Node.js needed).
+      run: curl -fsSL https://claude.ai/install.sh | bash
+      version_hint: latest
+    npm:
+      type: npm
+      summary: Global npm install (requires Node.js).
+      run: npm install -g @anthropic-ai/claude-code
+      version_hint: latest
+category: development
+tags: [ai, cli, coding-assistant]
+homepage: https://docs.anthropic.com/en/docs/claude-code
+provides:
+  binaries: [claude]

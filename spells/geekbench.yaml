@@ -1,0 +1,28 @@
+name: geekbench
+summary: Cross-platform CPU and GPU benchmark.
+verify: test -x "${SOFTWARE_DIR:-$HOME/Software}/Geekbench/geekbench6"
+version_check: |
+  "${SOFTWARE_DIR:-$HOME/Software}/Geekbench/geekbench6" --version 2>/dev/null \
+    | head -n 1 | grep -oE '[0-9]+\.[0-9]+(\.[0-9]+)?' | head -n 1
+cast:
+  default: tarball
+  channels:
+    tarball:
+      type: shell
+      summary: Pinned tarball from cdn.geekbench.com.
+      run: |
+        version="${GEEKBENCH_VERSION:-6.5.0}"
+        software="${SOFTWARE_DIR:-$HOME/Software}"
+        mkdir -p "$software"
+        tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+        cd "$tmp"
+        curl -fL -o geekbench.tar.gz \
+          "https://cdn.geekbench.com/Geekbench-${version}-Linux.tar.gz"
+        tar xzf geekbench.tar.gz
+        extracted=$(find . -maxdepth 1 -type d -name 'Geekbench-*-Linux' | head -n 1)
+        rm -rf "$software/Geekbench"
+        mv "$extracted" "$software/Geekbench"
+      version_hint: pinned
+category: benchmark
+tags: [cpu, gpu, performance]
+homepage: https://www.geekbench.com

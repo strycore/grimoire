@@ -1,0 +1,17 @@
+name: ollama
+summary: Run large language models locally.
+verify: command -v ollama
+version_check: ollama --version 2>/dev/null | awk '{print $NF}'
+cast:
+  default: upstream
+  channels:
+    upstream:
+      type: shell
+      summary: Official ollama.com installer (recommended).
+      run: curl -fsSL https://ollama.com/install.sh | sh
+      version_hint: latest
+category: ai
+tags: [llm, ai, local-inference]
+homepage: https://ollama.com
+provides:
+  binaries: [ollama]

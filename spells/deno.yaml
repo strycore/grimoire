@@ -1,0 +1,17 @@
+name: deno
+summary: Secure JavaScript and TypeScript runtime.
+verify: command -v deno
+version_check: deno --version 2>/dev/null | head -n 1 | awk '{print $2}'
+cast:
+  default: upstream
+  channels:
+    upstream:
+      type: shell
+      summary: Official deno.land installer.
+      run: curl -fsSL https://deno.land/install.sh | sh
+      version_hint: latest
+category: development
+tags: [language, javascript, typescript, runtime]
+homepage: https://deno.com
+provides:
+  binaries: [deno]

@@ -1,0 +1,28 @@
+name: java-sdk
+summary: OpenJDK toolchain.
+verify: command -v javac && command -v java
+version_check: javac --version | awk '{print $2}'
+cast:
+  default: dnf
+  channels:
+    dnf:
+      type: dnf
+      summary: Fedora OpenJDK (default version).
+      run: sudo dnf install -y java-latest-openjdk-devel
+      version_hint: distro
+      requires_sudo: true
+    sdkman:
+      type: shell
+      summary: SDKMAN-managed JDK (any major version).
+      run: |
+        if ! command -v sdk; then
+          curl -s "https://get.sdkman.io" | bash
+          source "$HOME/.sdkman/bin/sdkman-init.sh"
+        fi
+        sdk install java
+      version_hint: latest
+category: development
+tags: [language, jvm]
+homepage: https://openjdk.org
+provides:
+  binaries: [java, javac, jar]

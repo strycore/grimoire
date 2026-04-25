@@ -1,0 +1,24 @@
+name: rust-dev
+summary: Rust toolchain for native development.
+verify: command -v cargo && command -v rustc
+version_check: rustc --version | awk '{print $2}'
+cast:
+  default: rustup
+  channels:
+    rustup:
+      type: shell
+      summary: Upstream rustup (rolling stable).
+      run: curl --proto '=https' -sSf https://sh.rustup.rs | sh -s -- -y --default-toolchain stable
+      version_hint: latest
+    dnf:
+      type: dnf
+      summary: Fedora packages (lags upstream).
+      run: sudo dnf install -y rust cargo rustfmt clippy
+      version_hint: distro
+      requires_sudo: true
+after: rustup component add rustfmt clippy 2>/dev/null || true
+category: development
+tags: [language, toolchain]
+homepage: https://www.rust-lang.org
+provides:
+  binaries: [cargo, rustc, rustup]

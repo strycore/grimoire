@@ -1,0 +1,23 @@
+name: starship
+summary: Cross-shell prompt with rich language and tool integrations.
+verify: command -v starship
+version_check: starship --version 2>/dev/null | head -n 1 | awk '{print $2}'
+cast:
+  default: upstream
+  channels:
+    upstream:
+      type: shell
+      summary: Official starship.rs installer.
+      run: curl -sS https://starship.rs/install.sh | sh -s -- -y
+      version_hint: latest
+    dnf:
+      type: dnf
+      summary: Fedora package (may lag upstream).
+      run: sudo dnf install -y starship
+      version_hint: distro
+      requires_sudo: true
+category: shell
+tags: [prompt, terminal]
+homepage: https://starship.rs
+provides:
+  binaries: [starship]

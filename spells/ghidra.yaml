@@ -1,0 +1,40 @@
+name: ghidra
+summary: NSA's software reverse engineering platform.
+verify: command -v ghidra || test -x "${SOFTWARE_DIR:-$HOME/Software}/Ghidra/ghidraRun"
+version_check: |
+  awk -F= '/^application.version=/ {print $2; exit}' \
+    "${SOFTWARE_DIR:-$HOME/Software}/Ghidra/Ghidra/application.properties" 2>/dev/null
+requires:
+  - "java-sdk >= 21"
+cast:
+  default: tarball
+  channels:
+    tarball:
+      type: shell
+      summary: Latest release zip from GitHub into $SOFTWARE_DIR/Ghidra.
+      run: |
+        software="${SOFTWARE_DIR:-$HOME/Software}"
+        mkdir -p "$software" "$HOME/.local/bin"
+        tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+        cd "$tmp"
+        url=$(curl -s https://api.github.com/repos/NationalSecurityAgency/ghidra/releases/latest \
+              | grep -oE '"browser_download_url": "[^"]+_PUBLIC[^"]*\.zip"' \
+              | head -n 1 \
+              | sed -E 's/.*"(http[^"]+)"$/\1/')
+        if [ -z "$url" ]; then
+          echo "Couldn't find a Ghidra zip URL on GitHub releases" >&2
+          exit 1
+        fi
+        echo "Downloading $(basename "$url")..."
+        curl -fL -o ghidra.zip "$url"
+        unzip -q ghidra.zip
+        extracted=$(find . -maxdepth 1 -type d -name 'ghidra_*_PUBLIC' | head -n 1)
+        rm -rf "$software/Ghidra"
+        mv "$extracted" "$software/Ghidra"
+        ln -sf "$software/Ghidra/ghidraRun" "$HOME/.local/bin/ghidra"
+      version_hint: latest
+category: development
+tags: [reverse-engineering, security, decompiler]
+homepage: https://ghidra-sre.org
+provides:
+  binaries: [ghidra]

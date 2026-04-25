@@ -1,0 +1,35 @@
+name: vscode
+summary: Visual Studio Code editor.
+verify: command -v code
+version_check: code --version 2>/dev/null | head -n 1
+cast:
+  default: dnf
+  channels:
+    dnf:
+      type: dnf
+      summary: Microsoft RPM repository (recommended — native integration).
+      run: |
+        sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+        sudo tee /etc/yum.repos.d/vscode.repo > /dev/null <<'EOF'
+        [code]
+        name=Visual Studio Code
+        baseurl=https://packages.microsoft.com/yumrepos/vscode
+        enabled=1
+        autorefresh=1
+        type=rpm-md
+        gpgcheck=1
+        gpgkey=https://packages.microsoft.com/keys/microsoft.asc
+        EOF
+        sudo dnf install -y code
+      version_hint: latest
+      requires_sudo: true
+    flatpak:
+      type: flatpak
+      summary: Flathub (sandboxed — limited terminal/extension integration).
+      run: flatpak install -y --user flathub com.visualstudio.code
+      version_hint: latest
+category: development
+tags: [editor, ide]
+homepage: https://code.visualstudio.com
+provides:
+  binaries: [code]

@@ -1,0 +1,30 @@
+#!/usr/bin/env bash
+# Pre-commit hook: enforce rustfmt + clippy hygiene.
+#
+# Install once per clone:
+#   git config core.hooksPath .githooks
+#
+# Skip in an emergency with `git commit --no-verify`. Don't make a habit of it.
+set -euo pipefail
+
+# Only run when Rust sources are staged. Skips lints for docs/yaml-only commits.
+if ! git diff --cached --name-only --diff-filter=ACMR \
+        | grep -qE '\.(rs|toml)$'; then
+    exit 0
+fi
+
+echo "› cargo fmt --all --check"
+if ! cargo fmt --all --check; then
+    echo
+    echo "✗ formatting drift. Fix with: cargo fmt --all" >&2
+    exit 1
+fi
+
+echo "› cargo clippy --all-targets -- -D warnings"
+if ! cargo clippy --all-targets --quiet -- -D warnings; then
+    echo
+    echo "✗ clippy issues. Fix the warnings or address with cargo clippy --fix." >&2
+    exit 1
+fi
+
+echo "✓ pre-commit checks passed"

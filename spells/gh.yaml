@@ -1,0 +1,37 @@
+name: gh
+summary: GitHub command-line interface.
+verify: command -v gh
+version_check: gh --version 2>/dev/null | head -n 1 | awk '{print $3}'
+cast:
+  default: dnf
+  channels:
+    dnf:
+      type: dnf
+      summary: Official GitHub CLI repository (recommended).
+      run: |
+        sudo dnf install -y dnf-plugins-core
+        sudo dnf config-manager addrepo --from-repofile=https://cli.github.com/packages/rpm/gh-cli.repo
+        sudo dnf install -y gh
+      version_hint: latest
+      requires_sudo: true
+    upstream:
+      type: shell
+      summary: Latest tarball into ~/.local (no sudo).
+      run: |
+        mkdir -p "$HOME/.local/bin"
+        tmp=$(mktemp -d)
+        cd "$tmp"
+        version=$(curl -s https://api.github.com/repos/cli/cli/releases/latest \
+                  | grep -oE '"tag_name":\s*"v[^"]+' \
+                  | head -n 1 | sed 's/.*"v//')
+        curl -fsSL -o gh.tar.gz \
+          "https://github.com/cli/cli/releases/download/v${version}/gh_${version}_linux_amd64.tar.gz"
+        tar xzf gh.tar.gz
+        cp "gh_${version}_linux_amd64/bin/gh" "$HOME/.local/bin/"
+        cd / && rm -rf "$tmp"
+      version_hint: latest
+category: development
+tags: [github, cli, git]
+homepage: https://cli.github.com
+provides:
+  binaries: [gh]

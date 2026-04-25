@@ -1,0 +1,17 @@
+name: uv
+summary: Fast Python package and project manager from Astral.
+verify: command -v uv
+version_check: uv --version 2>/dev/null | awk '{print $2}'
+cast:
+  default: upstream
+  channels:
+    upstream:
+      type: shell
+      summary: Official Astral installer.
+      run: curl -LsSf https://astral.sh/uv/install.sh | sh
+      version_hint: latest
+category: development
+tags: [language, python, package-manager]
+homepage: https://docs.astral.sh/uv
+provides:
+  binaries: [uv, uvx]

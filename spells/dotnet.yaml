@@ -1,0 +1,29 @@
+name: dotnet
+summary: .NET SDK and runtime.
+verify: command -v dotnet
+version_check: dotnet --version 2>/dev/null
+cast:
+  default: upstream
+  channels:
+    upstream:
+      type: shell
+      summary: Microsoft's dotnet-install.sh into $SOFTWARE_DIR/dotnet (recommended).
+      run: |
+        software="${SOFTWARE_DIR:-$HOME/Software}"
+        install_dir="$software/dotnet"
+        mkdir -p "$install_dir" "$HOME/.local/bin"
+        curl -fsSL https://dot.net/v1/dotnet-install.sh \
+          | bash -s -- --channel STS --install-dir "$install_dir"
+        ln -sf "$install_dir/dotnet" "$HOME/.local/bin/dotnet"
+      version_hint: latest
+    dnf:
+      type: dnf
+      summary: Fedora packages (lags upstream).
+      run: sudo dnf install -y dotnet-sdk-9.0
+      version_hint: distro
+      requires_sudo: true
+category: development
+tags: [language, dotnet, csharp]
+homepage: https://dotnet.microsoft.com
+provides:
+  binaries: [dotnet]

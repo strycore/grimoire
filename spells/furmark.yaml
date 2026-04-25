@@ -1,0 +1,29 @@
+name: furmark
+summary: GPU stress test and benchmark from Geeks3D.
+verify: test -d "${SOFTWARE_DIR:-$HOME/Software}/FurMark"
+cast:
+  default: tarball
+  channels:
+    tarball:
+      type: shell
+      summary: Pinned tarball from geeks3d.com (override $FURMARK_URL if it 404s).
+      run: |
+        version="${FURMARK_VERSION:-2.7.0.0}"
+        software="${SOFTWARE_DIR:-$HOME/Software}"
+        url="${FURMARK_URL:-https://www.geeks3d.com/dl/files/furmark2/FurMark_Linux_x64_${version}.tar.gz}"
+        mkdir -p "$software"
+        tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+        cd "$tmp"
+        curl -fL -o furmark.tar.gz "$url"
+        tar xzf furmark.tar.gz
+        extracted=$(find . -maxdepth 1 -type d -name 'FurMark*' | head -n 1)
+        if [ -z "$extracted" ]; then
+          echo "FurMark archive layout was unexpected; check $tmp" >&2
+          exit 1
+        fi
+        rm -rf "$software/FurMark"
+        mv "$extracted" "$software/FurMark"
+      version_hint: pinned
+category: benchmark
+tags: [gpu, stress-test]
+homepage: https://www.geeks3d.com/furmark/

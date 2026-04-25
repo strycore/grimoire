@@ -1,0 +1,29 @@
+name: gravitymark
+summary: GPU benchmark from Tellusim.
+verify: test -d "${SOFTWARE_DIR:-$HOME/Software}/GravityMark"
+cast:
+  default: tarball
+  channels:
+    tarball:
+      type: shell
+      summary: Pinned tarball from gravitymark.tellusim.com (override $GRAVITYMARK_URL if it 404s).
+      run: |
+        version="${GRAVITYMARK_VERSION:-1.92}"
+        software="${SOFTWARE_DIR:-$HOME/Software}"
+        url="${GRAVITYMARK_URL:-https://gravitymark.tellusim.com/files/gravitymark/GravityMark_${version}_linux.tar.gz}"
+        mkdir -p "$software"
+        tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+        cd "$tmp"
+        curl -fL -o gravitymark.tar.gz "$url"
+        tar xzf gravitymark.tar.gz
+        extracted=$(find . -maxdepth 1 -type d -name 'GravityMark*' | head -n 1)
+        if [ -z "$extracted" ]; then
+          echo "GravityMark archive layout was unexpected; check $tmp" >&2
+          exit 1
+        fi
+        rm -rf "$software/GravityMark"
+        mv "$extracted" "$software/GravityMark"
+      version_hint: pinned
+category: benchmark
+tags: [gpu, performance]
+homepage: https://gravitymark.tellusim.com

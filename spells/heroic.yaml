@@ -1,0 +1,38 @@
+name: heroic
+summary: Heroic Games Launcher (Epic, GOG, Amazon Games).
+verify: command -v heroic || flatpak info com.heroicgameslauncher.hgl >/dev/null 2>&1
+version_check: |
+  flatpak info com.heroicgameslauncher.hgl 2>/dev/null | awk '/^ *Version:/ {print $2; exit}' \
+    || heroic --version 2>/dev/null
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — sandboxed, easy to update).
+      run: flatpak install -y --user flathub com.heroicgameslauncher.hgl
+      version_hint: latest
+    appimage:
+      type: shell
+      summary: AppImage from GitHub releases into $SOFTWARE_DIR.
+      run: |
+        software="${SOFTWARE_DIR:-$HOME/Software}"
+        mkdir -p "$software" "$HOME/.local/bin"
+        url=$(curl -s https://api.github.com/repos/Heroic-Games-Launcher/HeroicGamesLauncher/releases/latest \
+              | grep -oE '"browser_download_url": "[^"]+\.AppImage"' \
+              | head -n 1 \
+              | sed -E 's/.*"(http[^"]+)"$/\1/')
+        if [ -z "$url" ]; then
+          echo "Couldn't find a Heroic AppImage URL on GitHub releases" >&2
+          exit 1
+        fi
+        echo "Downloading $(basename "$url")..."
+        curl -fL -o "$software/Heroic.AppImage" "$url"
+        chmod +x "$software/Heroic.AppImage"
+        ln -sf "$software/Heroic.AppImage" "$HOME/.local/bin/heroic"
+      version_hint: latest
+category: gaming
+tags: [games, launcher, epic, gog]
+homepage: https://heroicgameslauncher.com
+provides:
+  binaries: [heroic]

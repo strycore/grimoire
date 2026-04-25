@@ -1,0 +1,40 @@
+name: android-dev
+summary: Android Studio + SDK + ADB.
+verify: |
+  command -v adb && test -x "${SOFTWARE_DIR:-$HOME/Software}/AndroidStudio/bin/studio.sh"
+version_check: adb --version | awk '/Version/ {print $5}'
+requires:
+  - "java-sdk >= 17"
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Android Studio via Flathub (sandboxed, auto-updates).
+      run: flatpak install -y --user flathub com.google.AndroidStudio
+      version_hint: latest
+    tarball:
+      type: shell
+      summary: Pinned upstream tarball into $SOFTWARE_DIR/AndroidStudio.
+      run: |
+        # Pinned version — bump periodically as upstream releases.
+        version="${ANDROID_STUDIO_VERSION:-2025.1.2.12}"
+        software="${SOFTWARE_DIR:-$HOME/Software}"
+        mkdir -p "$software"
+        tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+        cd "$tmp"
+        curl -fL -o android-studio.tar.gz \
+          "https://redirector.gvt1.com/edgedl/android/studio/ide-zips/${version}/android-studio-${version}-linux.tar.gz"
+        tar xzf android-studio.tar.gz
+        rm -rf "$software/AndroidStudio"
+        mv android-studio "$software/AndroidStudio"
+        echo "✓ Installed to $software/AndroidStudio"
+        echo "  Run $software/AndroidStudio/bin/studio.sh once to register the .desktop launcher."
+      version_hint: pinned
+after: |
+  echo "Run android-studio once to complete SDK setup, then re-run grimoire scry android-dev."
+category: development
+tags: [mobile, android, ide]
+homepage: https://developer.android.com/studio
+provides:
+  binaries: [adb, android-studio]

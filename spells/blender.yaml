@@ -1,0 +1,57 @@
+name: blender
+summary: Blender 3D modeling, animation, and rendering.
+verify: command -v blender || flatpak info org.blender.Blender >/dev/null 2>&1
+version_check: |
+  blender --version 2>/dev/null | awk '/^Blender/ {print $2}' \
+    || flatpak info org.blender.Blender 2>/dev/null | awk '/^ *Version:/ {print $2; exit}'
+cast:
+  default: tarball
+  channels:
+    tarball:
+      type: shell
+      summary: Official tar.xz from blender.org (recommended — latest release).
+      run: |
+        # Install location: $SOFTWARE_DIR/Blender. Configure $SOFTWARE_DIR
+        # in ~/.config/grimoire/config.toml; defaults to ~/Software.
+        software="${SOFTWARE_DIR:-$HOME/Software}"
+        mkdir -p "$software" "$HOME/.local/bin"
+
+        tmp=$(mktemp -d)
+        trap 'rm -rf "$tmp"' EXIT
+
+        url=$(curl -sL https://www.blender.org/download/ \
+              | grep -oE 'https://[^"]+/blender-[0-9]+\.[0-9]+\.[0-9]+-linux-x64\.tar\.xz' \
+              | head -n 1)
+        if [ -z "$url" ]; then
+          echo "Couldn't find a Blender Linux x64 tar.xz URL on blender.org" >&2
+          exit 1
+        fi
+        echo "Downloading $(basename "$url")..."
+
+        cd "$tmp"
+        curl -fL -o blender.tar.xz "$url"
+        tar xJf blender.tar.xz
+        extracted=$(find . -maxdepth 1 -type d -name 'blender-*-linux-x64' | head -n 1)
+
+        rm -rf "$software/Blender"
+        mv "$extracted" "$software/Blender"
+        ln -sf "$software/Blender/blender" "$HOME/.local/bin/blender"
+
+        echo "✓ Installed to $software/Blender; symlink at ~/.local/bin/blender"
+      version_hint: latest
+    flatpak:
+      type: flatpak
+      summary: Flathub (sandboxed; some integrations limited).
+      run: flatpak install -y --user flathub org.blender.Blender
+      version_hint: latest
+    dnf:
+      type: dnf
+      summary: Fedora packages (lags upstream).
+      run: sudo dnf install -y blender
+      version_hint: distro
+      requires_sudo: true
+category: media
+tags: [3d, modeling, animation, rendering]
+homepage: https://www.blender.org
+provides:
+  binaries: [blender]

@@ -1,0 +1,26 @@
+name: act
+summary: Run GitHub Actions locally (nektos/act).
+verify: command -v act
+version_check: act --version 2>/dev/null | awk '{print $3}'
+cast:
+  default: user
+  channels:
+    user:
+      type: shell
+      summary: Install latest release into ~/.local/bin (no sudo).
+      run: |
+        mkdir -p "$HOME/.local/bin"
+        curl -fsSL https://raw.githubusercontent.com/nektos/act/master/install.sh \
+          | bash -s -- -b "$HOME/.local/bin"
+      version_hint: latest
+    dnf:
+      type: dnf
+      summary: Fedora packages (community-maintained, may lag upstream).
+      run: sudo dnf install -y act
+      version_hint: distro
+      requires_sudo: true
+category: development
+tags: [github-actions, ci, cli]
+homepage: https://github.com/nektos/act
+provides:
+  binaries: [act]

@@ -1,0 +1,31 @@
+name: fspy
+summary: Open-source camera matching for VFX and 3D.
+verify: command -v fspy
+cast:
+  default: appimage
+  channels:
+    appimage:
+      type: shell
+      summary: Latest AppImage from GitHub releases into $SOFTWARE_DIR/fSpy.
+      run: |
+        software="${SOFTWARE_DIR:-$HOME/Software}"
+        target_dir="$software/fSpy"
+        mkdir -p "$target_dir" "$HOME/.local/bin"
+        url=$(curl -s https://api.github.com/repos/stuffmatic/fSpy/releases/latest \
+              | grep -oE '"browser_download_url": "[^"]+x86_64\.AppImage"' \
+              | head -n 1 \
+              | sed -E 's/.*"(http[^"]+)"$/\1/')
+        if [ -z "$url" ]; then
+          echo "Couldn't find an fSpy AppImage URL on GitHub releases" >&2
+          exit 1
+        fi
+        rm -f "$target_dir"/*.AppImage
+        curl -fL -o "$target_dir/$(basename "$url")" "$url"
+        chmod +x "$target_dir"/*.AppImage
+        ln -sf "$target_dir/$(basename "$url")" "$HOME/.local/bin/fspy"
+      version_hint: latest
+category: media
+tags: [3d, vfx, camera-matching]
+homepage: https://fspy.io
+provides:
+  binaries: [fspy]

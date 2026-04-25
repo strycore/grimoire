@@ -1,0 +1,42 @@
+name: godot
+summary: Godot 4 game engine (standard build, no .NET).
+verify: command -v godot
+version_check: godot --version 2>/dev/null | grep -oE '^[0-9]+(\.[0-9]+)+' | head -n 1
+cast:
+  default: tarball
+  channels:
+    tarball:
+      type: shell
+      summary: Latest stable from GitHub releases into $SOFTWARE_DIR/godot.
+      run: |
+        software="${SOFTWARE_DIR:-$HOME/Software}"
+        mkdir -p "$software/godot" "$HOME/.local/bin"
+        tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+        cd "$tmp"
+        url=$(curl -s https://api.github.com/repos/godotengine/godot/releases/latest \
+              | grep -oE '"browser_download_url": "[^"]+_linux\.x86_64\.zip"' \
+              | grep -v mono \
+              | head -n 1 \
+              | sed -E 's/.*"(http[^"]+)"$/\1/')
+        if [ -z "$url" ]; then
+          echo "Couldn't find a Godot Linux x86_64 zip on GitHub releases" >&2
+          exit 1
+        fi
+        echo "Downloading $(basename "$url")..."
+        curl -fL -o godot.zip "$url"
+        unzip -q godot.zip
+        bin=$(find . -maxdepth 1 -type f -name 'Godot_*linux*x86_64*' ! -name '*.zip' | head -n 1)
+        chmod +x "$bin"
+        mv "$bin" "$software/godot/godot"
+        ln -sf "$software/godot/godot" "$HOME/.local/bin/godot"
+      version_hint: latest
+    flatpak:
+      type: flatpak
+      summary: Flathub (sandboxed).
+      run: flatpak install -y --user flathub org.godotengine.Godot
+      version_hint: latest
+category: development
+tags: [game-engine, gamedev]
+homepage: https://godotengine.org
+provides:
+  binaries: [godot]

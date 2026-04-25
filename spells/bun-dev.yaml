@@ -1,0 +1,17 @@
+name: bun-dev
+summary: Bun JavaScript runtime + package manager.
+verify: command -v bun
+version_check: bun --version
+cast:
+  default: upstream
+  channels:
+    upstream:
+      type: shell
+      summary: Official bun.sh installer.
+      run: curl -fsSL https://bun.sh/install | bash
+      version_hint: latest
+category: development
+tags: [language, javascript, runtime]
+homepage: https://bun.sh
+provides:
+  binaries: [bun, bunx]

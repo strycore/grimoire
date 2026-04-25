@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/strycore/grimoire/schema/manifest.schema.json",
+  "title": "Grimoire Manifest",
+  "description": "A grimoire manifest declares which spells (with optional version constraints) a project or machine wants in scope. Lives at `<project>/.grimoire.toml` or `~/.config/grimoire/manifest.toml`. Mirrors `Manifest` in src/manifest.rs.",
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "spells": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "Constraint string: 'name', 'name >= 1.0', 'name >= 1.0, < 2.0'. Operators: <, <=, ==, !=, >=, >."
+      },
+      "description": "Top-level set of spells the manifest wants present. Use a profile if you need multiple selectable sets."
+    },
+    "overrides": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/override" },
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9-]*$"
+      },
+      "description": "Per-spell overrides keyed by spell name. Currently supports only `channel`."
+    },
+    "profiles": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/profile" },
+      "description": "Named alternate spell sets. Selected with `grimoire cast --profile <name>`."
+    }
+  },
+  "$defs": {
+    "override": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "channel": {
+          "type": "string",
+          "description": "Channel key to use for this spell. Must exist on the spell."
+        }
+      }
+    },
+    "profile": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "spells": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

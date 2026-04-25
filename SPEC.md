@@ -307,9 +307,10 @@ DEVELOPMENT_DIR = "/home/me/dev"
 | Pre-commit hook (fmt + clippy) | ✅ |
 | `requires:` resolution (transitive deps, topo sort, cycle detect) | ✅ |
 | User config (`~/.config/grimoire/config.toml`) with `[env]` exports | ✅ |
+| JSON Schema files (`schema/spell.schema.json`, `schema/manifest.schema.json`) | ✅ |
+| Schema-validation integration test (every shipped spell) | ✅ |
 | `grimoire scribe` (template scaffold) | 🚧 stub |
 | `grimoire diff` / `log` | not started |
-| JSON Schema files + CI validation | not started |
 | Update probes (`--check-updates`) | not started |
 | fili / moi integration | deferred |
 

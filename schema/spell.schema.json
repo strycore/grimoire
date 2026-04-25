@@ -1,0 +1,131 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/strycore/grimoire/schema/spell.schema.json",
+  "title": "Grimoire Spell",
+  "description": "A grimoire spell — one declared state. Source of truth for the on-disk YAML format. Mirrors `Spell` in src/spell.rs. CI uses this to validate every shipped spell, and IDEs (yaml-language-server) use it for autocomplete and inline lint while authoring.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["name", "summary", "verify", "cast"],
+  "properties": {
+    "name": {
+      "type": "string",
+      "pattern": "^[a-z][a-z0-9-]*$",
+      "description": "Unique spell identifier. Kebab-case, must start with a lowercase letter."
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1,
+      "description": "One-line description shown in listings."
+    },
+    "verify": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Bash snippet that exits 0 iff the desired state is currently reached."
+    },
+    "version_check": {
+      "type": "string",
+      "description": "Bash snippet that prints the currently-installed version on stdout. Required for any manifest entry that uses a version constraint."
+    },
+    "description": {
+      "type": "string",
+      "description": "Long-form documentation, shown in `grimoire show` and the GUI detail view."
+    },
+    "homepage": {
+      "type": "string",
+      "format": "uri"
+    },
+    "maintainer": {
+      "type": "string",
+      "description": "Contact for upstream issues with the spell itself."
+    },
+    "category": {
+      "type": "string",
+      "description": "Free-form grouping label for the GUI and `grimoire ls --category`."
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Free-form tags for search and filtering."
+    },
+    "distros": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Distros this spell is known to work on. Empty = universal. Tool checks /etc/os-release."
+    },
+    "requires": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "Constraint on another spell. Same syntax as manifest entries: 'name', 'name >= 1.0', 'name >= 1.0, < 2.0'."
+      }
+    },
+    "before": {
+      "type": "string",
+      "description": "Bash snippet run before any cast channel."
+    },
+    "after": {
+      "type": "string",
+      "description": "Bash snippet run after the chosen cast channel succeeds. Failures in `after` are warned but don't fail the cast."
+    },
+    "cast": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["default", "channels"],
+      "properties": {
+        "default": {
+          "type": "string",
+          "description": "Channel key used when none is specified by the user or manifest. Must match a key in `channels`."
+        },
+        "channels": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": { "$ref": "#/$defs/channel" },
+          "description": "One or more named install channels. Keys are referenced by `--via <key>` and by manifest overrides."
+        }
+      }
+    },
+    "provides": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "binaries": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      },
+      "description": "Informational. Used for cross-spell reasoning later (e.g. transitive `provides` could obviate `requires`)."
+    }
+  },
+  "$defs": {
+    "channel": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "summary", "run"],
+      "properties": {
+        "type": {
+          "type": "string",
+          "enum": ["shell", "dnf", "flatpak", "snap", "cargo", "pip", "npm"],
+          "description": "Channel kind. Drives GUI badges and (eventually) channel-specific update probes."
+        },
+        "summary": {
+          "type": "string",
+          "description": "Per-channel description shown when listing alternatives."
+        },
+        "run": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Bash snippet executed to install via this channel."
+        },
+        "version_hint": {
+          "type": "string",
+          "enum": ["latest", "distro", "pinned"],
+          "description": "What kind of version this channel typically delivers. Helps the tool pick a channel when a constraint isn't satisfied."
+        },
+        "requires_sudo": {
+          "type": "boolean",
+          "description": "Set true if the channel's `run` invokes sudo. Informational; the tool does not invoke sudo on the channel's behalf."
+        }
+      }
+    }
+  }
+}

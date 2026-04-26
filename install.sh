@@ -24,7 +24,8 @@ info() { printf '\033[32m›\033[0m %s\n' "$*"; }
 arch="$(uname -m)"
 os="$(uname -s)"
 case "$os $arch" in
-  "Linux x86_64"|"Linux amd64") target="linux-x86_64" ;;
+  "Linux x86_64"|"Linux amd64")  target="linux-x86_64" ;;
+  "Linux aarch64"|"Linux arm64") target="linux-aarch64" ;;
   *) err "no prebuilt binary for $os $arch — build from source: https://github.com/${REPO}" ;;
 esac
 

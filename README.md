@@ -25,7 +25,7 @@ See [SPEC.md](./SPEC.md) for the full design.
 
 ## Install
 
-Pre-built binary from the latest GitHub release (Linux x86_64, no Rust toolchain needed):
+Pre-built binary from the latest GitHub release (Linux x86_64 and aarch64; no Rust toolchain needed):
 
 ```sh
 curl -fsSL https://raw.githubusercontent.com/strycore/grimoire/main/install.sh | bash
@@ -158,7 +158,7 @@ Two ways to trigger `.github/workflows/release.yml`:
    ```
 2. **Manual dispatch**: GitHub → Actions → *Release* → *Run workflow*, supplying a tag like `v0.1.0`. The tag is created at the selected commit if it doesn't already exist. Useful for re-cutting a release without local git access.
 
-Either trigger builds a stripped Linux x86_64 binary, packages it as `grimoire-<version>-linux-x86_64.tar.gz` (with `README.md`, `SPEC.md`, `LICENSE` alongside) plus a `.sha256`, and publishes a GitHub release with auto-generated notes from the commit log since the previous tag.
+Either trigger builds stripped Linux x86_64 and aarch64 binaries (native arm64 runner, no cross-compile), packages each as `grimoire-<version>-linux-<arch>.tar.gz` (with `README.md`, `SPEC.md`, `LICENSE` alongside) plus a `.sha256`, and publishes one GitHub release with auto-generated notes from the commit log since the previous tag.
 
 ## License
 

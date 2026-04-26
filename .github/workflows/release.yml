@@ -9,10 +9,11 @@ name: Release
 #    like `v0.1.0`. The tag will be created at the chosen commit if it
 #    doesn't already exist.
 #
-# Either way: builds a stripped Linux x86_64 binary, packages it as
-# grimoire-<version>-linux-x86_64.tar.gz (with README, SPEC, LICENSE
-# alongside), generates a SHA-256, and publishes a GitHub release with
-# auto-generated notes from the commit log since the previous tag.
+# Either way: builds Linux x86_64 and aarch64 binaries (native arm64 runner,
+# no cross-compile), packages each as
+# grimoire-<version>-linux-<arch>.tar.gz (with README, SPEC, LICENSE
+# alongside), generates SHA-256 sidecars, and publishes one GitHub release
+# with auto-generated notes.
 
 on:
   push:
@@ -37,12 +38,13 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
-  build:
-    name: Build x86_64-unknown-linux-gnu
+  resolve:
+    name: Resolve tag
     runs-on: ubuntu-latest
+    outputs:
+      tag: ${{ steps.tag.outputs.tag }}
+      version: ${{ steps.tag.outputs.version }}
     steps:
-      - uses: actions/checkout@v4
-
       - name: Resolve tag
         id: tag
         run: |
@@ -60,39 +62,77 @@ jobs:
             echo "version=${tag#v}"
           } >> "$GITHUB_OUTPUT"
 
+  build:
+    name: Build ${{ matrix.target }}
+    needs: resolve
+    runs-on: ${{ matrix.runs_on }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - target: x86_64-unknown-linux-gnu
+            runs_on: ubuntu-latest
+            archive_suffix: linux-x86_64
+          - target: aarch64-unknown-linux-gnu
+            runs_on: ubuntu-24.04-arm
+            archive_suffix: linux-aarch64
+    steps:
+      - uses: actions/checkout@v4
+
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
 
       - name: Cache cargo
         uses: Swatinem/rust-cache@v2
+        with:
+          key: release-${{ matrix.target }}
 
       - name: Build
-        run: cargo build --release
+        run: cargo build --release --target ${{ matrix.target }}
 
       - name: Strip
-        run: strip target/release/${{ env.BIN_NAME }}
+        run: strip target/${{ matrix.target }}/release/${{ env.BIN_NAME }}
 
       - name: Package
         id: pkg
         run: |
-          version="${{ steps.tag.outputs.version }}"
+          version="${{ needs.resolve.outputs.version }}"
           stage="$(mktemp -d)"
-          cp target/release/${{ env.BIN_NAME }} "$stage/"
+          cp target/${{ matrix.target }}/release/${{ env.BIN_NAME }} "$stage/"
           cp README.md SPEC.md LICENSE "$stage/"
-          archive="${{ env.BIN_NAME }}-${version}-linux-x86_64.tar.gz"
+          archive="${{ env.BIN_NAME }}-${version}-${{ matrix.archive_suffix }}.tar.gz"
           tar -C "$stage" -czf "$archive" .
           sha256sum "$archive" > "${archive}.sha256"
-          {
-            echo "archive=$archive"
-            echo "sha=${archive}.sha256"
-          } >> "$GITHUB_OUTPUT"
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.archive_suffix }}
+          path: |
+            ${{ steps.pkg.outputs.archive }}
+            ${{ steps.pkg.outputs.archive }}.sha256
+          if-no-files-found: error
+
+  release:
+    name: Publish
+    needs: [resolve, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
 
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.tag.outputs.tag }}
+          tag_name: ${{ needs.resolve.outputs.tag }}
           generate_release_notes: true
           fail_on_unmatched_files: true
           files: |
-            ${{ steps.pkg.outputs.archive }}
-            ${{ steps.pkg.outputs.sha }}
+            artifacts/*.tar.gz
+            artifacts/*.sha256

@@ -18,6 +18,33 @@ cast:
         echo "✓ openrazer installed. Reboot or re-login so plugdev group membership takes effect."
       version_hint: distro
       requires_sudo: true
+    apt:
+      type: apt
+      summary: hardware:razer OBS apt repo + openrazer-meta + plugdev group.
+      run: |
+        . /etc/os-release
+        case "$ID" in
+          ubuntu) repo_dir="xUbuntu_${VERSION_ID}" ;;
+          debian|raspbian) repo_dir="Debian_${VERSION_ID}" ;;
+          linuxmint|pop|elementary)
+            repo_dir="xUbuntu_${UBUNTU_CODENAME:-24.04}"
+            ;;
+          *) echo "OBS razer repo doesn't ship a build for $ID" >&2; exit 1 ;;
+        esac
+        url="https://download.opensuse.org/repositories/hardware:/razer/${repo_dir}"
+        sudo apt-get install -y curl
+        sudo install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL "${url}/Release.key" \
+          | gpg --dearmor | sudo tee /etc/apt/keyrings/hardware_razer.gpg > /dev/null
+        sudo chmod a+r /etc/apt/keyrings/hardware_razer.gpg
+        echo "deb [signed-by=/etc/apt/keyrings/hardware_razer.gpg] ${url}/ ./" \
+          | sudo tee /etc/apt/sources.list.d/hardware_razer.list > /dev/null
+        sudo apt-get update
+        sudo apt-get install -y openrazer-meta
+        sudo gpasswd -a "$USER" plugdev
+        echo "✓ openrazer installed. Reboot or re-login so plugdev group membership takes effect."
+      version_hint: distro
+      requires_sudo: true
 category: hardware
 tags: [razer, peripherals, drivers]
 homepage: https://openrazer.github.io

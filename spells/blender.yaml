@@ -50,6 +50,20 @@ cast:
       run: sudo dnf install -y blender
       version_hint: distro
       requires_sudo: true
+    apt:
+      type: apt
+      summary: Debian/Ubuntu packages (often lags upstream).
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y blender
+      version_hint: distro
+      requires_sudo: true
+    pacman:
+      type: pacman
+      summary: Arch extra repo.
+      run: sudo pacman -S --needed --noconfirm blender
+      version_hint: distro
+      requires_sudo: true
 category: media
 tags: [3d, modeling, animation, rendering]
 homepage: https://www.blender.org

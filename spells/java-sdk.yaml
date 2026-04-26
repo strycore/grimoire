@@ -11,6 +11,20 @@ cast:
       run: sudo dnf install -y java-latest-openjdk-devel
       version_hint: distro
       requires_sudo: true
+    apt:
+      type: apt
+      summary: Debian/Ubuntu default-jdk metapackage.
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y default-jdk
+      version_hint: distro
+      requires_sudo: true
+    pacman:
+      type: pacman
+      summary: Arch extra repo (current OpenJDK).
+      run: sudo pacman -S --needed --noconfirm jdk-openjdk
+      version_hint: distro
+      requires_sudo: true
     sdkman:
       type: shell
       summary: SDKMAN-managed JDK (any major version).

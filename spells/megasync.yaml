@@ -14,6 +14,27 @@ cast:
           "https://mega.nz/linux/repo/Fedora_${release}/x86_64/megasync-Fedora_${release}.x86_64.rpm"
       version_hint: latest
       requires_sudo: true
+    apt:
+      type: apt
+      summary: MEGA's per-distro .deb (its post-install drops the repo file).
+      run: |
+        . /etc/os-release
+        case "$ID" in
+          ubuntu) prefix="xUbuntu_${VERSION_ID}" ;;
+          debian|raspbian) prefix="Debian_${VERSION_ID}" ;;
+          linuxmint|pop|elementary)
+            # Best-effort: use the upstream Ubuntu suite when available.
+            prefix="xUbuntu_${UBUNTU_CODENAME:-24.04}"
+            ;;
+          *) echo "MEGA doesn't ship a .deb for $ID; check https://mega.io/sync" >&2; exit 1 ;;
+        esac
+        tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+        url="https://mega.nz/linux/repo/${prefix}/amd64/megasync-${prefix}_amd64.deb"
+        sudo apt-get install -y curl
+        curl -fL -o "$tmp/megasync.deb" "$url"
+        sudo apt-get install -y "$tmp/megasync.deb"
+      version_hint: latest
+      requires_sudo: true
 category: cloud
 tags: [sync, storage]
 homepage: https://mega.nz

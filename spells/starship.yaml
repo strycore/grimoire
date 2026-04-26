@@ -16,6 +16,12 @@ cast:
       run: sudo dnf install -y starship
       version_hint: distro
       requires_sudo: true
+    pacman:
+      type: pacman
+      summary: Arch extra repo.
+      run: sudo pacman -S --needed --noconfirm starship
+      version_hint: distro
+      requires_sudo: true
 category: shell
 tags: [prompt, terminal]
 homepage: https://starship.rs

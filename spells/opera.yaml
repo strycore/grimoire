@@ -22,6 +22,21 @@ cast:
         sudo dnf install -y opera-stable
       version_hint: latest
       requires_sudo: true
+    apt:
+      type: apt
+      summary: Official Opera apt repo + opera-stable package.
+      run: |
+        sudo apt-get install -y curl
+        sudo install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://deb.opera.com/archive.key \
+          | gpg --dearmor | sudo tee /etc/apt/keyrings/opera.gpg > /dev/null
+        sudo chmod a+r /etc/apt/keyrings/opera.gpg
+        echo "deb [signed-by=/etc/apt/keyrings/opera.gpg] https://deb.opera.com/opera-stable/ stable non-free" \
+          | sudo tee /etc/apt/sources.list.d/opera-stable.list > /dev/null
+        sudo apt-get update
+        sudo apt-get install -y opera-stable
+      version_hint: latest
+      requires_sudo: true
 category: communication
 tags: [browser]
 homepage: https://www.opera.com

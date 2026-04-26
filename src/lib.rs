@@ -16,6 +16,7 @@ pub mod shell;
 pub mod spell;
 pub mod state;
 pub mod system_deps;
+pub mod upgrade;
 pub mod version;
 
 pub use crate::grimoire::{Grimoire, Source, SpellEntry};

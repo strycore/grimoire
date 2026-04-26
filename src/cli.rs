@@ -33,6 +33,8 @@ pub enum Command {
     Cast(CastArgs),
     /// Scaffold a new personal spell. (Not yet implemented.)
     Scribe(ScribeArgs),
+    /// Update grimoire itself by downloading the latest GitHub release.
+    Upgrade(UpgradeArgs),
 }
 
 #[derive(clap::Args)]
@@ -87,6 +89,13 @@ pub struct ScribeArgs {
     pub name: String,
 }
 
+#[derive(clap::Args)]
+pub struct UpgradeArgs {
+    /// Report the latest version without downloading or replacing.
+    #[arg(long)]
+    pub check: bool,
+}
+
 pub fn run(cli: Cli) -> Result<()> {
     match cli.command {
         Command::Ls(args) => ls(args),
@@ -94,7 +103,14 @@ pub fn run(cli: Cli) -> Result<()> {
         Command::Cast(args) => cast_cmd(args),
         Command::Scry(args) => scry_cmd(args),
         Command::Scribe(_) => stub("scribe"),
+        Command::Upgrade(args) => crate::upgrade::upgrade(args.check),
     }
+}
+
+/// `true` if the command consumes its own update channel and shouldn't have
+/// the passive "version available" nag printed afterwards.
+pub fn is_self_update_command(cli: &Cli) -> bool {
+    matches!(cli.command, Command::Upgrade(_))
 }
 
 fn ls(args: LsArgs) -> Result<()> {

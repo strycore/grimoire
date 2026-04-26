@@ -1,0 +1,77 @@
+name: cuda
+summary: NVIDIA CUDA toolkit (nvcc + libraries).
+verify: command -v nvcc
+version_check: |
+  set +o pipefail
+  nvcc --version 2>/dev/null | awk '/release/ {gsub(",",""); print $5; exit}'
+cast:
+  default: dnf
+  channels:
+    dnf:
+      type: dnf
+      summary: NVIDIA's official Fedora repo + cuda-toolkit metapackage.
+      run: |
+        release=$(rpm -E %fedora)
+        # NVIDIA publishes per-Fedora repos at developer.download.nvidia.com.
+        # Falls back to the most recent supported Fedora release if the
+        # current one isn't published yet.
+        url="https://developer.download.nvidia.com/compute/cuda/repos/fedora${release}/x86_64/cuda-fedora${release}.repo"
+        if ! curl -fsLI "$url" >/dev/null 2>&1; then
+          for prev in 42 41 40 39; do
+            alt="https://developer.download.nvidia.com/compute/cuda/repos/fedora${prev}/x86_64/cuda-fedora${prev}.repo"
+            if curl -fsLI "$alt" >/dev/null 2>&1; then
+              echo "Note: no NVIDIA CUDA repo for Fedora ${release}; falling back to Fedora ${prev}." >&2
+              url="$alt"
+              break
+            fi
+          done
+        fi
+        sudo dnf install -y dnf-plugins-core
+        sudo dnf config-manager addrepo --overwrite --from-repofile="$url"
+        sudo dnf install -y cuda-toolkit
+        echo "✓ CUDA installed. Add /usr/local/cuda/bin to PATH if it isn't already."
+      version_hint: latest
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: NVIDIA's official apt repo via cuda-keyring + cuda-toolkit metapackage.
+      run: |
+        . /etc/os-release
+        case "$ID" in
+          ubuntu)
+            distro="ubuntu$(echo "$VERSION_ID" | tr -d .)"
+            ;;
+          debian)
+            distro="debian${VERSION_ID%%.*}"
+            ;;
+          linuxmint|pop|elementary)
+            distro="ubuntu$(echo "${UBUNTU_CODENAME:-24.04}" | tr -d .)"
+            ;;
+          *)
+            echo "NVIDIA CUDA apt repo doesn't directly support $ID — check https://developer.nvidia.com/cuda-downloads" >&2
+            exit 1
+            ;;
+        esac
+        tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+        cd "$tmp"
+        sudo apt-get install -y wget
+        wget -q "https://developer.download.nvidia.com/compute/cuda/repos/${distro}/x86_64/cuda-keyring_1.1-1_all.deb"
+        sudo apt-get install -y ./cuda-keyring_1.1-1_all.deb
+        sudo apt-get update
+        sudo apt-get install -y cuda-toolkit
+        echo "✓ CUDA installed. Add /usr/local/cuda/bin to PATH if it isn't already."
+      version_hint: latest
+      requires_sudo: true
+    pacman:
+      type: pacman
+      summary: Arch extra repo.
+      run: |
+        sudo pacman -S --needed --noconfirm cuda
+        echo "✓ CUDA installed. Add /opt/cuda/bin to PATH if it isn't already."
+      version_hint: distro
+      requires_sudo: true
+category: gpu
+tags: [nvidia, gpu, compute, cuda, ml]
+homepage: https://developer.nvidia.com/cuda-toolkit
+provides:
+  binaries: [nvcc, nvidia-smi]

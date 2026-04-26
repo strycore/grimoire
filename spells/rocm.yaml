@@ -1,0 +1,66 @@
+name: rocm
+summary: AMD ROCm GPU compute stack (HIP, OpenCL, SMI).
+verify: command -v rocminfo
+version_check: |
+  # Query the package manager for the rocm-core / rocm-hip version.
+  # `rocminfo` exposes only the older HSA runtime (1.1), not the ROCm release.
+  set +o pipefail
+  rpm -q --queryformat '%{VERSION}' rocm-core 2>/dev/null \
+    || rpm -q --queryformat '%{VERSION}' rocm-hip 2>/dev/null \
+    || dpkg-query -W -f '${Version}' rocm-core 2>/dev/null \
+    || (pacman -Q rocm-hip-runtime 2>/dev/null | awk '{print $2}') \
+    || true
+cast:
+  default: dnf
+  channels:
+    dnf:
+      type: dnf
+      summary: Fedora packages (rocm-hip, rocm-opencl, rocm-smi, rocminfo).
+      run: |
+        sudo dnf install -y rocm-hip rocm-opencl rocm-smi rocminfo
+        sudo usermod -aG video,render "$USER"
+        echo "✓ ROCm installed. Log out and back in so video/render group membership takes effect."
+      version_hint: distro
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Debian/Ubuntu packages (rocm-libs + rocminfo).
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y rocm-libs rocminfo
+        sudo usermod -aG video,render "$USER"
+        echo "✓ ROCm installed. Log out and back in so video/render group membership takes effect."
+      version_hint: distro
+      requires_sudo: true
+    pacman:
+      type: pacman
+      summary: Arch extra repo (rocm-hip-libraries + opencl + smi).
+      run: |
+        sudo pacman -S --needed --noconfirm \
+          rocm-hip-libraries rocm-opencl-runtime rocm-smi-lib rocminfo
+        sudo usermod -aG video,render "$USER"
+        echo "✓ ROCm installed. Log out and back in so video/render group membership takes effect."
+      version_hint: distro
+      requires_sudo: true
+    upstream:
+      type: shell
+      summary: AMD's official amdgpu-install (latest stable; pinned RPM URL).
+      run: |
+        # AMD's installer handles repo setup + package install.
+        # Bump $AMDGPU_INSTALL_VERSION when AMD publishes a newer release.
+        version="${AMDGPU_INSTALL_VERSION:-6.4.60404-1}"
+        rhel="${AMDGPU_INSTALL_RHEL:-9.5}"
+        rpm="amdgpu-install-${version}.el${rhel%.*}.noarch.rpm"
+        url="https://repo.radeon.com/amdgpu-install/${version%-*}/rhel/${rhel}/${rpm}"
+        sudo dnf install -y "$url"
+        sudo amdgpu-install -y --usecase=rocm --no-dkms
+        sudo usermod -aG video,render "$USER"
+        echo "✓ ROCm (upstream) installed. Log out and back in for group membership."
+      version_hint: latest
+      requires_sudo: true
+      distros: [fedora, rhel, centos, rocky, almalinux]
+category: gpu
+tags: [amd, gpu, compute, hip, opencl, ml]
+homepage: https://rocm.docs.amd.com
+provides:
+  binaries: [rocminfo, rocm-smi]

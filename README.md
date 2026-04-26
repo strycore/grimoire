@@ -40,6 +40,17 @@ curl -fsSL .../install.sh | GRIMOIRE_INSTALL_DIR=$HOME/bin bash
 
 The script downloads the release tarball, verifies its SHA-256, and drops the `grimoire` binary into `~/.local/bin`. Make sure that's on your `$PATH`.
 
+## Updating
+
+```sh
+grimoire upgrade           # download and replace if a newer release exists
+grimoire upgrade --check   # just report; don't download
+```
+
+`upgrade` queries the GitHub releases API, downloads the tarball matching your platform, verifies the SHA-256, and atomically replaces the running binary via `rename(2)`. It refuses to run when the binary lives in a directory you can't write to (e.g. `/usr/bin/grimoire` from a distro package — let your package manager handle those) or when it looks like a `cargo` dev build.
+
+Every command also tail-prints a one-line nag (`✨ grimoire X.Y.Z is available …`) when a newer release exists. The check is cached weekly in `~/.local/state/grimoire/update-check.json`, so it hits the network at most once every seven days, never during the hot path of a command.
+
 ## Build from source
 
 ```sh

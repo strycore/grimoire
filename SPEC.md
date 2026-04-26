@@ -66,6 +66,11 @@ version_check: rustc --version | awk '{print $2}'
                                      # Empty/non-zero exit ⇒ not installed (same as verify=false).
 
 requires: ["java-sdk >= 17"]         # other spells; same constraint syntax as manifests
+system_requires: [cc, pkg-config]    # bare binaries that must be in PATH before cast.
+                                     # Missing binaries are installed via the distro
+                                     # package manager (dnf/apt/pacman) — not modeled
+                                     # as spells. Known: cc, pkg-config, make, curl,
+                                     # wget, git.
 provides:
   binaries: [cargo, rustc, rustup]   # informational; useful for cross-spell reasoning later
 

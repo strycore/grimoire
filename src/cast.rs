@@ -56,6 +56,8 @@ pub fn cast(spell: &Spell, opts: CastOptions<'_>) -> Result<Outcome> {
     }
 
     if opts.dry_run {
+        crate::system_deps::ensure(&spell.system_requires, true)
+            .with_context(|| format!("spell {} system_requires", spell.name))?;
         eprintln!("\n[dry-run] would run channel `{channel_name}`:");
         eprintln!("---");
         eprintln!("{}", channel.run.trim_end());
@@ -63,14 +65,19 @@ pub fn cast(spell: &Spell, opts: CastOptions<'_>) -> Result<Outcome> {
         return Ok(Outcome::DryRun);
     }
 
-    // 3. before hook.
+    // 3. system_requires — install missing system packages before any hook
+    //    runs, since `before` and the channel itself may rely on them.
+    crate::system_deps::ensure(&spell.system_requires, false)
+        .with_context(|| format!("spell {} system_requires", spell.name))?;
+
+    // 4. before hook.
     if let Some(before) = &spell.before {
         shell::banner("before", &channel_name)?;
         shell::run_or_fail("before hook", before)
             .with_context(|| format!("spell {} before hook", spell.name))?;
     }
 
-    // 4. Channel run.
+    // 5. Channel run.
     shell::banner(&channel_name, "cast")?;
     let exit = shell::run("cast", &channel.run)
         .with_context(|| format!("spell {} cast via {channel_name}", spell.name))?;
@@ -86,7 +93,7 @@ pub fn cast(spell: &Spell, opts: CastOptions<'_>) -> Result<Outcome> {
         bail!("channel `{channel_name}` exited with code {exit}");
     }
 
-    // 5. after hook.
+    // 6. after hook.
     if let Some(after) = &spell.after {
         shell::banner("after", &channel_name)?;
         if let Err(e) = shell::run_or_fail("after hook", after) {
@@ -96,7 +103,7 @@ pub fn cast(spell: &Spell, opts: CastOptions<'_>) -> Result<Outcome> {
         }
     }
 
-    // 6. Re-verify and capture version_after.
+    // 7. Re-verify and capture version_after.
     let post = run_verify(spell)?;
     let version_after = if post.ok() {
         run_version_check(spell)?.map(|c| c.trimmed_stdout().to_string())

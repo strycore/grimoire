@@ -2,6 +2,7 @@ name: rust-dev
 summary: Rust toolchain for native development.
 verify: command -v cargo && command -v rustc
 version_check: rustc --version | awk '{print $2}'
+system_requires: [cc, pkg-config, make]
 cast:
   default: rustup
   channels:

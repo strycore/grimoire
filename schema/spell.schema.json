@@ -59,6 +59,13 @@
         "description": "Constraint on another spell. Same syntax as manifest entries: 'name', 'name >= 1.0', 'name >= 1.0, < 2.0'."
       }
     },
+    "system_requires": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "description": "Bare binary name (e.g. 'cc', 'pkg-config', 'make', 'curl', 'wget', 'git') that must be in PATH before this spell can cast. Missing binaries are installed via the distro package manager (dnf/apt/pacman). Not modeled as full spells."
+      }
+    },
     "before": {
       "type": "string",
       "description": "Bash snippet run before any cast channel."

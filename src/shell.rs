@@ -21,6 +21,12 @@ fn apply_env(cmd: &mut Command) {
 /// stdin/stdout/stderr are inherited from the parent so installers can
 /// prompt for sudo, show progress, and stream output in real time.
 ///
+/// Spawned as `bash -l` (login shell) so that `~/.bash_profile` /
+/// `~/.profile` are sourced first — that's where installers like rustup,
+/// bun, uv, etc. inject their `PATH` setup. Without `-l`, those `PATH`
+/// additions wouldn't be visible to a snippet running immediately after
+/// install, and every spell would need its own env-sourcing workaround.
+///
 /// Returns the exit status; never `Err` on non-zero exit (callers decide
 /// what to do with a failed run).
 pub fn run(label: &str, snippet: &str) -> Result<i32> {
@@ -28,7 +34,8 @@ pub fn run(label: &str, snippet: &str) -> Result<i32> {
     let full = format!("{prelude}{snippet}");
 
     let mut cmd = Command::new("bash");
-    cmd.arg("-c")
+    cmd.arg("-l")
+        .arg("-c")
         .arg(&full)
         .stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
@@ -44,12 +51,14 @@ pub fn run(label: &str, snippet: &str) -> Result<i32> {
 /// Run a snippet silently (e.g. `verify`): capture all output, return
 /// `(exit_code, captured)`. Used when the tool needs to *check* a state
 /// without dumping the check's output to the user's terminal.
+///
+/// Also runs as a login shell — see [`run`] for rationale.
 pub fn check(label: &str, snippet: &str) -> Result<CheckOutput> {
     let prelude = "set -e\nset -o pipefail\n";
     let full = format!("{prelude}{snippet}");
 
     let mut cmd = Command::new("bash");
-    cmd.arg("-c").arg(&full).stdin(Stdio::null());
+    cmd.arg("-l").arg("-c").arg(&full).stdin(Stdio::null());
     apply_env(&mut cmd);
     let output = cmd
         .output()

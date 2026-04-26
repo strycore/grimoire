@@ -31,6 +31,12 @@ pub struct Spell {
 
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub requires: Vec<String>,
+    /// Bare binary names that must be in `PATH` before this spell can cast
+    /// (e.g. `cc`, `make`, `curl`). If missing, grimoire installs the
+    /// matching distro package via the system package manager — these are
+    /// not modeled as full spells.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub system_requires: Vec<String>,
     #[serde(default, skip_serializing_if = "Provides::is_empty")]
     pub provides: Provides,
 

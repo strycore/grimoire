@@ -1,0 +1,23 @@
+name: brave
+summary: Brave Browser.
+verify: command -v brave-browser || command -v brave
+version_check: brave-browser --version 2>/dev/null | awk '{print $NF}'
+cast:
+  default: dnf
+  channels:
+    dnf:
+      type: dnf
+      summary: Official Brave RPM repo + brave-browser package.
+      run: |
+        sudo dnf install -y dnf-plugins-core
+        sudo rpm --import https://brave-browser-rpm-release.s3.brave.com/brave-core.asc
+        sudo dnf config-manager addrepo --overwrite \
+          --from-repofile=https://brave-browser-rpm-release.s3.brave.com/brave-browser.repo
+        sudo dnf install -y brave-browser
+      version_hint: latest
+      requires_sudo: true
+category: communication
+tags: [browser]
+homepage: https://brave.com
+provides:
+  binaries: [brave-browser]

@@ -1,0 +1,20 @@
+name: terra
+summary: Terra repository — modern Mesa and packages not in Fedora proper.
+verify: rpm -q terra-release >/dev/null 2>&1 && test -f /etc/yum.repos.d/terra.repo
+version_check: rpm -q --queryformat '%{VERSION}' terra-release 2>/dev/null
+cast:
+  default: bootstrap
+  channels:
+    bootstrap:
+      type: dnf
+      summary: Install terra-release (the package that lays down the canonical repo file).
+      run: |
+        release=$(rpm -E %fedora)
+        sudo dnf install -y --nogpgcheck \
+          --repofrompath "terra,https://repos.fyralabs.com/terra${release}" \
+          terra-release
+      version_hint: latest
+      requires_sudo: true
+category: system
+tags: [repository, fedora]
+homepage: https://terra.fyralabs.com

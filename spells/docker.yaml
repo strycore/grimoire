@@ -1,0 +1,26 @@
+name: docker
+summary: Docker CE container runtime.
+verify: command -v docker
+version_check: docker --version 2>/dev/null | awk '{gsub(",",""); print $3}'
+cast:
+  default: dnf
+  channels:
+    dnf:
+      type: dnf
+      summary: Docker CE official Fedora repo + docker-ce stack.
+      run: |
+        sudo dnf install -y dnf-plugins-core
+        sudo dnf config-manager addrepo --overwrite \
+          --from-repofile=https://download.docker.com/linux/fedora/docker-ce.repo
+        sudo dnf install -y docker-ce docker-ce-cli containerd.io \
+          docker-buildx-plugin docker-compose-plugin
+        sudo systemctl enable --now docker
+        sudo usermod -aG docker "$USER"
+        echo "✓ Docker installed. Log out and back in for the docker group to take effect."
+      version_hint: latest
+      requires_sudo: true
+category: development
+tags: [containers, runtime]
+homepage: https://docs.docker.com
+provides:
+  binaries: [docker]

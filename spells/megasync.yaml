@@ -1,0 +1,21 @@
+name: megasync
+summary: MEGA cloud storage sync client.
+verify: command -v megasync
+version_check: megasync --version 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)+' | head -n 1
+cast:
+  default: dnf
+  channels:
+    dnf:
+      type: dnf
+      summary: MEGA's per-Fedora-version RPM (its post-install drops the repo file).
+      run: |
+        release=$(rpm -E %fedora)
+        sudo dnf install -y \
+          "https://mega.nz/linux/repo/Fedora_${release}/x86_64/megasync-Fedora_${release}.x86_64.rpm"
+      version_hint: latest
+      requires_sudo: true
+category: cloud
+tags: [sync, storage]
+homepage: https://mega.nz
+provides:
+  binaries: [megasync]

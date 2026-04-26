@@ -1,0 +1,23 @@
+name: openrazer
+summary: OpenRazer driver and userspace tools for Razer hardware.
+verify: rpm -q openrazer-meta >/dev/null 2>&1 && id -nG "$USER" | grep -qw plugdev
+version_check: rpm -q --queryformat '%{VERSION}' openrazer-meta 2>/dev/null
+cast:
+  default: dnf
+  channels:
+    dnf:
+      type: dnf
+      summary: hardware:razer OBS repo + openrazer-meta + plugdev group.
+      run: |
+        release=$(rpm -E %fedora)
+        sudo dnf install -y dnf-plugins-core
+        sudo dnf config-manager addrepo --overwrite \
+          --from-repofile="https://download.opensuse.org/repositories/hardware:/razer/Fedora_${release}/hardware:razer.repo"
+        sudo dnf install -y openrazer-meta
+        sudo gpasswd -a "$USER" plugdev
+        echo "✓ openrazer installed. Reboot or re-login so plugdev group membership takes effect."
+      version_hint: distro
+      requires_sudo: true
+category: hardware
+tags: [razer, peripherals, drivers]
+homepage: https://openrazer.github.io

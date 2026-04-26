@@ -1,0 +1,25 @@
+name: slack
+summary: Slack desktop client.
+verify: flatpak info com.slack.Slack >/dev/null 2>&1 || command -v slack
+version_check: |
+  flatpak info com.slack.Slack 2>/dev/null | awk '/^ *Version:/ {print $2; exit}' \
+    || slack --version 2>/dev/null
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — sandboxed, auto-updates).
+      run: flatpak install -y --user flathub com.slack.Slack
+      version_hint: latest
+    snap:
+      type: snap
+      summary: Snap (requires snapd).
+      run: sudo snap install slack
+      version_hint: latest
+      requires_sudo: true
+category: communication
+tags: [chat, work]
+homepage: https://slack.com/downloads/linux
+provides:
+  binaries: [slack]

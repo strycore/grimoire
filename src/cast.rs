@@ -21,21 +21,12 @@ pub enum Outcome {
 }
 
 pub fn cast(spell: &Spell, opts: CastOptions<'_>) -> Result<Outcome> {
-    let channel_name = opts.via.unwrap_or(&spell.cast.default).to_string();
-    let channel = spell.cast.channels.get(&channel_name).with_context(|| {
-        format!(
-            "spell {:?} has no channel named {:?} (available: {})",
-            spell.name,
-            channel_name,
-            spell
-                .cast
-                .channels
-                .keys()
-                .cloned()
-                .collect::<Vec<_>>()
-                .join(", ")
-        )
-    })?;
+    let distro = crate::distro::current();
+    let (channel_name, channel) = spell
+        .cast
+        .pick_channel(distro, opts.via)
+        .with_context(|| format!("spell {:?}: choosing channel", spell.name))?;
+    let channel_name = channel_name.to_string();
 
     // 1. Initial verify.
     let initial = run_verify(spell)?;

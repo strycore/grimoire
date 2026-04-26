@@ -7,6 +7,7 @@ pub mod cast;
 pub mod cli;
 pub mod config;
 pub mod constraint;
+pub mod distro;
 pub mod grimoire;
 pub mod manifest;
 pub mod resolve;

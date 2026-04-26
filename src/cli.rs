@@ -320,6 +320,13 @@ fn cast_cmd(args: CastArgs) -> Result<()> {
                 summary.skipped_invalid += 1;
                 eprintln!("? {} invalid (review verify script)", step.spell.name);
             }
+            scry::Status::Unsupported => {
+                summary.skipped_unsupported += 1;
+                eprintln!(
+                    "✗ {} unsupported on this distro (no applicable channel)",
+                    step.spell.name
+                );
+            }
         }
     }
 
@@ -366,6 +373,7 @@ struct CastSummary {
     dry_run: usize,
     skipped_drifted: usize,
     skipped_invalid: usize,
+    skipped_unsupported: usize,
     verify_still_fails: usize,
 }
 
@@ -386,6 +394,12 @@ impl CastSummary {
         }
         if self.skipped_invalid > 0 {
             parts.push(format!("{} invalid (skipped)", self.skipped_invalid));
+        }
+        if self.skipped_unsupported > 0 {
+            parts.push(format!(
+                "{} unsupported (skipped)",
+                self.skipped_unsupported
+            ));
         }
         if self.verify_still_fails > 0 {
             parts.push(format!("{} failed", self.verify_still_fails));

@@ -58,10 +58,80 @@ pub struct Channel {
     pub version_hint: Option<VersionHint>,
     #[serde(default, skip_serializing_if = "is_false")]
     pub requires_sudo: bool,
+    /// Distros this channel applies to. Empty ⇒ fall back to the implicit
+    /// list from `ChannelType` (e.g. `dnf` ⇒ Fedora-family). Use this only
+    /// to override that default — for instance to restrict a `shell` channel
+    /// to a single distro, or to broaden a `dnf` channel.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub distros: Vec<String>,
 }
 
 fn is_false(b: &bool) -> bool {
     !*b
+}
+
+impl Channel {
+    /// True if this channel applies on `distro`. Universal channel types
+    /// (whose implicit list is empty) apply everywhere unless explicitly
+    /// restricted via the per-channel `distros: [...]` field.
+    pub fn applies_to(&self, distro: &crate::distro::Distro) -> bool {
+        if !self.distros.is_empty() {
+            return self.distros.iter().any(|d| distro.matches(d));
+        }
+        let implicit = self.kind.implicit_distros();
+        if implicit.is_empty() {
+            true
+        } else {
+            implicit.iter().any(|d| distro.matches(d))
+        }
+    }
+}
+
+impl Cast {
+    /// Pick a channel for this distro.
+    /// - If `override_name` is given, that channel is used (or an error is
+    ///   returned if it doesn't apply on `distro`).
+    /// - Else `cast.default` is used if it applies.
+    /// - Else the first channel (in alphabetical key order) that applies.
+    /// - Else an error is returned saying the spell isn't supported here.
+    pub fn pick_channel<'a>(
+        &'a self,
+        distro: &crate::distro::Distro,
+        override_name: Option<&'a str>,
+    ) -> anyhow::Result<(&'a str, &'a Channel)> {
+        if let Some(name) = override_name {
+            let ch = self.channels.get(name).ok_or_else(|| {
+                anyhow::anyhow!(
+                    "channel {name:?} not found (available: {})",
+                    self.channels.keys().cloned().collect::<Vec<_>>().join(", ")
+                )
+            })?;
+            if !ch.applies_to(distro) {
+                anyhow::bail!("channel {name:?} doesn't apply on distro {:?}", distro.id,);
+            }
+            return Ok((name, ch));
+        }
+        if let Some(ch) = self.channels.get(&self.default)
+            && ch.applies_to(distro)
+        {
+            return Ok((self.default.as_str(), ch));
+        }
+        for (name, ch) in &self.channels {
+            if ch.applies_to(distro) {
+                return Ok((name.as_str(), ch));
+            }
+        }
+        anyhow::bail!(
+            "no channel applies on distro {:?} (channels: {})",
+            distro.id,
+            self.channels.keys().cloned().collect::<Vec<_>>().join(", "),
+        )
+    }
+
+    /// True if at least one channel applies on `distro`.
+    pub fn any_applicable(&self, distro: &crate::distro::Distro) -> bool {
+        self.channels.values().any(|c| c.applies_to(distro))
+    }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
@@ -69,11 +139,56 @@ fn is_false(b: &bool) -> bool {
 pub enum ChannelType {
     Shell,
     Dnf,
+    Apt,
+    Pacman,
     Flatpak,
     Snap,
     Cargo,
     Pip,
     Npm,
+}
+
+impl ChannelType {
+    /// Distros this channel type implicitly targets when the channel doesn't
+    /// override with its own `distros: [...]` list. Empty list ⇒ universal.
+    pub fn implicit_distros(self) -> &'static [&'static str] {
+        match self {
+            ChannelType::Dnf => &[
+                "fedora",
+                "rhel",
+                "centos",
+                "rocky",
+                "almalinux",
+                "opensuse",
+                "opensuse-tumbleweed",
+                "opensuse-leap",
+            ],
+            ChannelType::Apt => &[
+                "debian",
+                "ubuntu",
+                "linuxmint",
+                "pop",
+                "elementary",
+                "raspbian",
+            ],
+            ChannelType::Pacman => &[
+                "arch",
+                "manjaro",
+                "endeavouros",
+                "garuda",
+                "cachyos",
+                "artix",
+                "archlinux",
+            ],
+            // Cross-distro channel types — apply everywhere by default.
+            ChannelType::Shell
+            | ChannelType::Flatpak
+            | ChannelType::Snap
+            | ChannelType::Cargo
+            | ChannelType::Pip
+            | ChannelType::Npm => &[],
+        }
+    }
 }
 
 #[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]

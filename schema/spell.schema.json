@@ -104,8 +104,18 @@
       "properties": {
         "type": {
           "type": "string",
-          "enum": ["shell", "dnf", "flatpak", "snap", "cargo", "pip", "npm"],
-          "description": "Channel kind. Drives GUI badges and (eventually) channel-specific update probes."
+          "enum": [
+            "shell",
+            "dnf",
+            "apt",
+            "pacman",
+            "flatpak",
+            "snap",
+            "cargo",
+            "pip",
+            "npm"
+          ],
+          "description": "Channel kind. Drives GUI badges, channel-specific update probes, and implicit distro applicability (e.g. `dnf` ⇒ Fedora-family)."
         },
         "summary": {
           "type": "string",
@@ -124,6 +134,11 @@
         "requires_sudo": {
           "type": "boolean",
           "description": "Set true if the channel's `run` invokes sudo. Informational; the tool does not invoke sudo on the channel's behalf."
+        },
+        "distros": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "Distros this channel applies to. Empty/omitted ⇒ use the implicit list from `type` (e.g. `dnf` ⇒ Fedora-family). Set this only to override that default — for instance to restrict a `shell` channel to one distro, or to broaden a `dnf` channel to OpenSUSE forks."
         }
       }
     }

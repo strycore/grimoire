@@ -19,6 +19,9 @@ pub enum Status {
     /// when the script itself is buggy). Reserved for future heuristics; not
     /// emitted today since we treat any non-zero exit as state-not-reached.
     Invalid,
+    /// `verify` fails AND no `cast.channels[*]` applies on this distro. The
+    /// spell can't be installed here without a new channel being added.
+    Unsupported,
 }
 
 impl Status {
@@ -29,6 +32,7 @@ impl Status {
             Status::Missing => "missing",
             Status::Drifted => "drifted",
             Status::Invalid => "invalid",
+            Status::Unsupported => "unsupported",
         }
     }
 
@@ -39,6 +43,7 @@ impl Status {
             Status::Missing => "·",
             Status::Drifted => "⚠",
             Status::Invalid => "?",
+            Status::Unsupported => "✗",
         }
     }
 }
@@ -93,7 +98,14 @@ pub fn observe(
         });
     }
 
-    // verify failed → distinguish missing vs drifted via the log.
+    // verify failed → distinguish missing vs drifted vs unsupported.
+    if !spell.cast.any_applicable(crate::distro::current()) {
+        return Ok(State {
+            status: Status::Unsupported,
+            version: None,
+            last_cast_channel: None,
+        });
+    }
     let prior = match log {
         Some(l) => l.last_successful_cast(&spell.name)?,
         None => None,

@@ -126,6 +126,19 @@ git config core.hooksPath .githooks
 
 The `pre-commit` hook runs `cargo fmt --all --check` and `cargo clippy --all-targets -- -D warnings` whenever Rust sources are staged. Skip with `git commit --no-verify` only in emergencies.
 
+CI (`.github/workflows/ci.yml`) runs the same gate plus `cargo test --all-targets` on every PR and push to `main`.
+
+## Releasing
+
+Tag-driven. Bump the version in `Cargo.toml`, commit, then:
+
+```sh
+git tag v0.1.0
+git push --tags
+```
+
+`.github/workflows/release.yml` builds a stripped Linux x86_64 binary, packages it as `grimoire-<version>-linux-x86_64.tar.gz` (with `README.md`, `SPEC.md`, `LICENSE` alongside) plus a `.sha256`, and creates a GitHub release with auto-generated notes from the commit log since the previous tag.
+
 ## License
 
 GPL-3.0-or-later.

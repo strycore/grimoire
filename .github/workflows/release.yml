@@ -1,13 +1,29 @@
 name: Release
 
-# Push a tag like `v0.1.0` and this builds a Linux x86_64 release artifact,
-# then publishes a GitHub release with auto-generated notes and the artifact
-# attached. To release:
-#   git tag v0.1.0 && git push --tags
+# Two ways to trigger:
+#
+# 1. Push a `v*` tag (preferred for real releases):
+#       git tag v0.1.0 && git push --tags
+#
+# 2. Run from the Actions tab → "Release" → "Run workflow", supplying a tag
+#    like `v0.1.0`. The tag will be created at the chosen commit if it
+#    doesn't already exist.
+#
+# Either way: builds a stripped Linux x86_64 binary, packages it as
+# grimoire-<version>-linux-x86_64.tar.gz (with README, SPEC, LICENSE
+# alongside), generates a SHA-256, and publishes a GitHub release with
+# auto-generated notes from the commit log since the previous tag.
+
 on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Version tag (e.g. v0.1.0). Created at the selected commit if it doesn't exist."
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -17,7 +33,7 @@ env:
   BIN_NAME: grimoire
 
 concurrency:
-  group: release-${{ github.ref }}
+  group: release-${{ github.event.inputs.tag || github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -26,6 +42,23 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+
+      - name: Resolve tag
+        id: tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            tag="${{ inputs.tag }}"
+          else
+            tag="${GITHUB_REF_NAME}"
+          fi
+          if ! [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+([-.+].*)?$ ]]; then
+            echo "::error::tag '$tag' must match vMAJOR.MINOR.PATCH[-suffix]"
+            exit 1
+          fi
+          {
+            echo "tag=$tag"
+            echo "version=${tag#v}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
@@ -42,7 +75,7 @@ jobs:
       - name: Package
         id: pkg
         run: |
-          version="${GITHUB_REF_NAME#v}"
+          version="${{ steps.tag.outputs.version }}"
           stage="$(mktemp -d)"
           cp target/release/${{ env.BIN_NAME }} "$stage/"
           cp README.md SPEC.md LICENSE "$stage/"
@@ -57,6 +90,7 @@ jobs:
       - name: Publish release
         uses: softprops/action-gh-release@v2
         with:
+          tag_name: ${{ steps.tag.outputs.tag }}
           generate_release_notes: true
           fail_on_unmatched_files: true
           files: |

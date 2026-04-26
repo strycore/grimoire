@@ -130,14 +130,16 @@ CI (`.github/workflows/ci.yml`) runs the same gate plus `cargo test --all-target
 
 ## Releasing
 
-Tag-driven. Bump the version in `Cargo.toml`, commit, then:
+Two ways to trigger `.github/workflows/release.yml`:
 
-```sh
-git tag v0.1.0
-git push --tags
-```
+1. **Tag push** (preferred for real releases): bump `version` in `Cargo.toml`, commit, then
+   ```sh
+   git tag v0.1.0
+   git push --tags
+   ```
+2. **Manual dispatch**: GitHub → Actions → *Release* → *Run workflow*, supplying a tag like `v0.1.0`. The tag is created at the selected commit if it doesn't already exist. Useful for re-cutting a release without local git access.
 
-`.github/workflows/release.yml` builds a stripped Linux x86_64 binary, packages it as `grimoire-<version>-linux-x86_64.tar.gz` (with `README.md`, `SPEC.md`, `LICENSE` alongside) plus a `.sha256`, and creates a GitHub release with auto-generated notes from the commit log since the previous tag.
+Either trigger builds a stripped Linux x86_64 binary, packages it as `grimoire-<version>-linux-x86_64.tar.gz` (with `README.md`, `SPEC.md`, `LICENSE` alongside) plus a `.sha256`, and publishes a GitHub release with auto-generated notes from the commit log since the previous tag.
 
 ## License
 

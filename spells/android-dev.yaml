@@ -5,6 +5,7 @@ verify: |
 version_check: adb --version | awk '/Version/ {print $5}'
 requires:
   - "java-sdk >= 17"
+  - flathub
 cast:
   default: flatpak
   channels:

@@ -1,0 +1,17 @@
+name: flathub
+summary: Flathub remote for flatpak (per-user).
+verify: flatpak remotes 2>/dev/null | awk '{print $1}' | grep -qx flathub
+system_requires: [flatpak]
+cast:
+  default: setup
+  channels:
+    setup:
+      type: shell
+      summary: Register Flathub as a per-user flatpak remote (no sudo).
+      run: |
+        flatpak remote-add --user --if-not-exists flathub \
+          https://flathub.org/repo/flathub.flatpakrepo
+      version_hint: latest
+category: system
+tags: [flatpak, repository, foundation]
+homepage: https://flathub.org

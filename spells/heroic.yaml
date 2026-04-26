@@ -1,5 +1,6 @@
 name: heroic
 summary: Heroic Games Launcher (Epic, GOG, Amazon Games).
+requires: [flathub]
 verify: command -v heroic || flatpak info com.heroicgameslauncher.hgl >/dev/null 2>&1
 version_check: |
   flatpak info com.heroicgameslauncher.hgl 2>/dev/null | awk '/^ *Version:/ {print $2; exit}' \

@@ -1,5 +1,6 @@
 name: slack
 summary: Slack desktop client.
+requires: [flathub]
 verify: flatpak info com.slack.Slack >/dev/null 2>&1 || command -v slack
 version_check: |
   flatpak info com.slack.Slack 2>/dev/null | awk '/^ *Version:/ {print $2; exit}' \

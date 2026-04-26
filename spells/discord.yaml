@@ -1,5 +1,6 @@
 name: discord
 summary: Discord chat client.
+requires: [flathub]
 verify: flatpak info com.discordapp.Discord >/dev/null 2>&1 || command -v discord
 version_check: |
   flatpak info com.discordapp.Discord 2>/dev/null | awk '/^ *Version:/ {print $2; exit}' \

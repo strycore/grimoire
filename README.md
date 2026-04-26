@@ -2,7 +2,7 @@
 
 Declarative state for personal Linux desktops — share, version, and cast YAML spells.
 
-> Status: alpha. Foundation in place (parsing, validation, listing). Execution is stubbed.
+> Status: alpha. 33 spells, runs on Fedora / Debian-Ubuntu / Arch families. Cast / scry / requires / manifests / multi-distro all work; `scribe`, update probes, and an AUR channel type are not yet implemented.
 
 ## What it is
 
@@ -19,7 +19,7 @@ spells = [
 ]
 ```
 
-Then `grimoire cast` (eventually) ensures the machine reaches that state.
+Then `grimoire cast` ensures the machine reaches that state — runs `verify` first, picks the right channel for the current distro (dnf on Fedora, apt on Debian/Ubuntu, pacman on Arch, or the universal `shell` / `flatpak` / `cargo` / `npm` channels), and skips spells that already verify.
 
 See [SPEC.md](./SPEC.md) for the full design.
 
@@ -111,29 +111,56 @@ The variable is exported into every shell snippet that runs. With no config,
 the spell's shell default kicks in — out-of-the-box behavior never depends on
 config existing.
 
-### Dependencies (`requires:`)
+### Dependencies (`requires:` and `system_requires:`)
 
-Spells can declare other spells they need:
+A spell can declare other spells it needs (`requires:`) and bare system binaries it expects in `$PATH` (`system_requires:`):
 
 ```yaml
+name: rust-dev
+requires: []
+system_requires: [cc, pkg-config, make]
+
 name: android-dev
 requires: ["java-sdk >= 17"]
 ```
 
-`grimoire cast android-dev` (or `scry`) walks the graph: java-sdk gets
-checked/cast first, in topological order. Constraints from multiple
-dependents are AND-merged. Cycles are detected and refused.
+`grimoire cast android-dev` (or `scry`) walks the spell graph: `java-sdk` gets checked/cast first, in topological order. Constraints from multiple dependents are AND-merged. Cycles are detected and refused.
+
+`system_requires` entries are bare binary names (e.g. `cc`, `pkg-config`, `make`, `curl`, `wget`, `git`) — missing ones are installed via the active distro's package manager before the cast runs, without being modeled as full spells.
+
+### Multi-distro
+
+Channel types carry an implicit distro applicability:
+
+| `type:` | Applies on |
+|---|---|
+| `dnf` | Fedora-family (RHEL, CentOS, Rocky, AlmaLinux, OpenSUSE) |
+| `apt` | Debian-family (Debian, Ubuntu, Mint, Pop!_OS, elementary, Raspbian) |
+| `pacman` | Arch-family (Arch, Manjaro, EndeavourOS, Garuda, CachyOS, Artix) |
+| `shell`, `flatpak`, `snap`, `cargo`, `pip`, `npm` | universal |
+
+`/etc/os-release` is read once at startup; cast picks `cast.default` if it applies on this distro, otherwise the first applicable channel in alphabetical key order. Per-channel `distros: [...]` overrides the implicit list. A spell with no applicable channel reports as **unsupported** rather than being silently failed.
 
 ### State machine
 
-Each spell on this machine is in one of: **cast**, **outdated** (verify passes
-but version constraint fails), **missing** (never cast), **drifted** (was cast
-but verify now fails — surfaced for review, never auto-recast), or **invalid**.
+Each spell on this machine is in one of:
 
-Cast events are logged to `~/.local/state/grimoire/cast.db` (SQLite) so drift
-detection survives across sessions.
+- **cast** — `verify` passes (and any constraint is satisfied)
+- **outdated** — `verify` passes but `version_check` doesn't satisfy the constraint
+- **missing** — `verify` fails, no record of a previous cast
+- **drifted** — was cast successfully before; `verify` now fails. Surfaced for review; never auto-recast
+- **invalid** — `verify` exited with an unexpected error
+- **unsupported** — no channel applies on this distro
 
-`scribe`, update probes, and `requires:` resolution are next.
+Cast events are logged to `~/.local/state/grimoire/cast.db` (SQLite) so drift detection survives across sessions.
+
+### Login-shell snippets
+
+Every shell snippet (`verify`, `version_check`, `before`, `after`, channel `run:`) executes under `bash -l` with `set -e` and `set -o pipefail` injected. Login mode sources `~/.bash_profile` / `~/.profile` so installers like `rustup`, `bun`, and `uv` make their `$PATH` additions visible immediately to subsequent snippets — no need for spells to manually `source $HOME/.cargo/env` and friends.
+
+### Next
+
+`scribe` (template scaffold for personal spells), update probes (`grimoire scry --check-updates`), and an `aur` channel type for Arch users would round out the canonical spell set.
 
 ## Contributing
 

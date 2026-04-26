@@ -1,0 +1,39 @@
+name: lutris
+summary: Lutris game launcher.
+verify: command -v lutris || flatpak info net.lutris.Lutris >/dev/null 2>&1
+version_check: |
+  lutris --version 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)+' | head -n 1 \
+    || flatpak info net.lutris.Lutris 2>/dev/null | awk '/^ *Version:/ {print $2; exit}'
+cast:
+  default: dnf
+  channels:
+    dnf:
+      type: dnf
+      summary: Fedora packages.
+      run: sudo dnf install -y lutris
+      version_hint: distro
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Debian/Ubuntu packages.
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y lutris
+      version_hint: distro
+      requires_sudo: true
+    pacman:
+      type: pacman
+      summary: Arch extra repo.
+      run: sudo pacman -S --needed --noconfirm lutris
+      version_hint: distro
+      requires_sudo: true
+    flatpak:
+      type: flatpak
+      summary: Flathub (sandboxed; some external integrations require extra setup).
+      run: flatpak install -y --user flathub net.lutris.Lutris
+      version_hint: latest
+category: gaming
+tags: [games, launcher, wine]
+homepage: https://lutris.net
+provides:
+  binaries: [lutris]

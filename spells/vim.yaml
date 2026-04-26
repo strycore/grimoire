@@ -1,0 +1,32 @@
+name: vim
+summary: Vim text editor (full-featured build).
+verify: command -v vim
+version_check: vim --version 2>/dev/null | head -n 1 | grep -oE '[0-9]+(\.[0-9]+)+' | head -n 1
+cast:
+  default: dnf
+  channels:
+    dnf:
+      type: dnf
+      summary: Fedora vim-enhanced (full feature set, GTK clipboard support).
+      run: sudo dnf install -y vim-enhanced
+      version_hint: distro
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Debian/Ubuntu vim-gtk3 (full feature set, X clipboard support).
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y vim-gtk3
+      version_hint: distro
+      requires_sudo: true
+    pacman:
+      type: pacman
+      summary: Arch extra repo (gvim provides clipboard-enabled vim).
+      run: sudo pacman -S --needed --noconfirm gvim
+      version_hint: distro
+      requires_sudo: true
+category: development
+tags: [editor, cli]
+homepage: https://www.vim.org
+provides:
+  binaries: [vim]

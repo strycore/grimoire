@@ -1,0 +1,40 @@
+name: gimp
+summary: GIMP image editor.
+requires: [flathub]
+verify: command -v gimp || flatpak info org.gimp.GIMP >/dev/null 2>&1
+version_check: |
+  flatpak info org.gimp.GIMP 2>/dev/null | awk '/^ *Version:/ {print $2; exit}' \
+    || gimp --version 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)+' | head -n 1
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — ships current GIMP, distro packages often lag).
+      run: flatpak install -y --user flathub org.gimp.GIMP
+      version_hint: latest
+    dnf:
+      type: dnf
+      summary: Fedora packages (often lags upstream).
+      run: sudo dnf install -y gimp
+      version_hint: distro
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Debian/Ubuntu packages (often lags upstream).
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y gimp
+      version_hint: distro
+      requires_sudo: true
+    pacman:
+      type: pacman
+      summary: Arch extra repo.
+      run: sudo pacman -S --needed --noconfirm gimp
+      version_hint: distro
+      requires_sudo: true
+category: media
+tags: [image, editor, raster]
+homepage: https://www.gimp.org
+provides:
+  binaries: [gimp]

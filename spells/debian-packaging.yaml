@@ -1,0 +1,40 @@
+name: debian-packaging
+summary: Tooling for building and maintaining Debian/Ubuntu .deb packages.
+verify: command -v dpkg-buildpackage && command -v debuild && command -v gbp
+version_check: dpkg-buildpackage --version 2>/dev/null | head -n 1 | grep -oE '[0-9]+(\.[0-9]+)+' | head -n 1
+cast:
+  default: apt
+  channels:
+    apt:
+      type: apt
+      summary: Standard Debian packaging stack (debhelper, devscripts, git-buildpackage).
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          build-essential \
+          devscripts \
+          debhelper \
+          dh-make \
+          git-buildpackage \
+          dput \
+          lintian \
+          pbuilder \
+          quilt \
+          fakeroot
+      version_hint: distro
+      requires_sudo: true
+    dnf:
+      type: dnf
+      summary: Cross-build .deb packages from Fedora (limited; best inside a Debian container).
+      run: |
+        sudo dnf install -y dpkg-dev fakeroot perl-Dpkg
+        echo "Note: full Debian packaging tooling (debhelper, devscripts, gbp) is not"
+        echo "      packaged for Fedora. For real packaging work, use a Debian/Ubuntu"
+        echo "      container or VM and cast this spell with the apt channel."
+      version_hint: distro
+      requires_sudo: true
+category: development
+tags: [packaging, debian, deb]
+homepage: https://www.debian.org/doc/manuals/maint-guide
+provides:
+  binaries: [dpkg-buildpackage, debuild, gbp]

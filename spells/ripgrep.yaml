@@ -1,0 +1,32 @@
+name: ripgrep
+summary: ripgrep — fast recursive code search (modern grep/ag replacement).
+verify: command -v rg
+version_check: rg --version 2>/dev/null | head -n 1 | awk '{print $2}'
+cast:
+  default: dnf
+  channels:
+    dnf:
+      type: dnf
+      summary: Fedora packages.
+      run: sudo dnf install -y ripgrep
+      version_hint: distro
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Debian/Ubuntu packages.
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y ripgrep
+      version_hint: distro
+      requires_sudo: true
+    pacman:
+      type: pacman
+      summary: Arch extra repo.
+      run: sudo pacman -S --needed --noconfirm ripgrep
+      version_hint: distro
+      requires_sudo: true
+category: development
+tags: [search, cli, grep]
+homepage: https://github.com/BurntSushi/ripgrep
+provides:
+  binaries: [rg]

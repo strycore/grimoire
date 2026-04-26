@@ -1,0 +1,40 @@
+name: picard
+summary: MusicBrainz Picard audio tagger.
+requires: [flathub]
+verify: command -v picard || flatpak info org.musicbrainz.Picard >/dev/null 2>&1
+version_check: |
+  flatpak info org.musicbrainz.Picard 2>/dev/null | awk '/^ *Version:/ {print $2; exit}' \
+    || picard --version 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)+' | head -n 1
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — current upstream release).
+      run: flatpak install -y --user flathub org.musicbrainz.Picard
+      version_hint: latest
+    dnf:
+      type: dnf
+      summary: Fedora packages.
+      run: sudo dnf install -y picard
+      version_hint: distro
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Debian/Ubuntu packages (package is named "picard" or "picard-tools" — installer uses "picard").
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y picard
+      version_hint: distro
+      requires_sudo: true
+    pacman:
+      type: pacman
+      summary: Arch extra repo.
+      run: sudo pacman -S --needed --noconfirm picard
+      version_hint: distro
+      requires_sudo: true
+category: media
+tags: [audio, tagger, musicbrainz]
+homepage: https://picard.musicbrainz.org
+provides:
+  binaries: [picard]

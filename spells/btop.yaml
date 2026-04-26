@@ -1,0 +1,32 @@
+name: btop
+summary: btop++ resource monitor (modern htop replacement).
+verify: command -v btop
+version_check: btop --version 2>/dev/null | head -n 1 | grep -oE '[0-9]+(\.[0-9]+)+' | head -n 1
+cast:
+  default: dnf
+  channels:
+    dnf:
+      type: dnf
+      summary: Fedora packages.
+      run: sudo dnf install -y btop
+      version_hint: distro
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Debian/Ubuntu packages.
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y btop
+      version_hint: distro
+      requires_sudo: true
+    pacman:
+      type: pacman
+      summary: Arch extra repo.
+      run: sudo pacman -S --needed --noconfirm btop
+      version_hint: distro
+      requires_sudo: true
+category: system
+tags: [monitor, tui, htop]
+homepage: https://github.com/aristocratos/btop
+provides:
+  binaries: [btop]

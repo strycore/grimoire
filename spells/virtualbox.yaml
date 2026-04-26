@@ -1,0 +1,67 @@
+name: virtualbox
+summary: Oracle VirtualBox virtualization platform.
+verify: command -v VBoxManage
+version_check: VBoxManage --version 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)+' | head -n 1
+cast:
+  default: oracle
+  channels:
+    oracle:
+      type: dnf
+      summary: Oracle's official Fedora repo (recommended — tracks upstream).
+      run: |
+        sudo dnf install -y dnf-plugins-core kernel-devel kernel-headers gcc make perl
+        sudo dnf config-manager addrepo --overwrite \
+          --from-repofile=https://www.virtualbox.org/download/oracle_vbox.repo
+        # Pick the highest VirtualBox-X.Y package available in the Oracle repo.
+        pkg=$(dnf -q --disablerepo='*' --enablerepo='virtualbox' list available 'VirtualBox-?.?' 2>/dev/null \
+              | awk '/^VirtualBox-[0-9]+\.[0-9]+/ {print $1}' \
+              | sed 's/\..*$//' \
+              | sort -V \
+              | tail -n 1)
+        if [ -z "$pkg" ]; then
+          echo "Couldn't find a VirtualBox-X.Y package in Oracle's repo" >&2
+          exit 1
+        fi
+        sudo dnf install -y "$pkg"
+        sudo /sbin/vboxconfig || true
+        sudo gpasswd -a "$USER" vboxusers
+        echo "✓ VirtualBox installed. Re-login so vboxusers group membership takes effect."
+      version_hint: latest
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Oracle's official Debian/Ubuntu repo (tracks upstream).
+      run: |
+        . /etc/os-release
+        case "$ID" in
+          ubuntu|linuxmint|pop|elementary)
+            codename="${UBUNTU_CODENAME:-$VERSION_CODENAME}"
+            ;;
+          debian|raspbian) codename="$VERSION_CODENAME" ;;
+          *) echo "Oracle VirtualBox apt repo doesn't have builds for $ID" >&2; exit 1 ;;
+        esac
+        sudo apt-get install -y curl gnupg ca-certificates linux-headers-$(uname -r) dkms
+        sudo install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://www.virtualbox.org/download/oracle_vbox_2016.asc \
+          | gpg --dearmor | sudo tee /etc/apt/keyrings/oracle-virtualbox-2016.gpg > /dev/null
+        sudo chmod a+r /etc/apt/keyrings/oracle-virtualbox-2016.gpg
+        echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/oracle-virtualbox-2016.gpg] https://download.virtualbox.org/virtualbox/debian ${codename} contrib" \
+          | sudo tee /etc/apt/sources.list.d/virtualbox.list > /dev/null
+        sudo apt-get update
+        # Install the highest available virtualbox-X.Y meta-package.
+        pkg=$(apt-cache search '^virtualbox-[0-9]+\.[0-9]+$' \
+              | awk '{print $1}' | sort -V | tail -n 1)
+        if [ -z "$pkg" ]; then
+          echo "Couldn't find a virtualbox-X.Y package in Oracle's repo" >&2
+          exit 1
+        fi
+        sudo apt-get install -y "$pkg"
+        sudo gpasswd -a "$USER" vboxusers
+        echo "✓ VirtualBox installed. Re-login so vboxusers group membership takes effect."
+      version_hint: latest
+      requires_sudo: true
+category: virtualization
+tags: [vm, oracle]
+homepage: https://www.virtualbox.org
+provides:
+  binaries: [VBoxManage, VirtualBox]

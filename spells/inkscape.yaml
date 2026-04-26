@@ -1,0 +1,40 @@
+name: inkscape
+summary: Inkscape vector graphics editor.
+requires: [flathub]
+verify: command -v inkscape || flatpak info org.inkscape.Inkscape >/dev/null 2>&1
+version_check: |
+  flatpak info org.inkscape.Inkscape 2>/dev/null | awk '/^ *Version:/ {print $2; exit}' \
+    || inkscape --version 2>/dev/null | awk '{print $2}'
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — current upstream release).
+      run: flatpak install -y --user flathub org.inkscape.Inkscape
+      version_hint: latest
+    dnf:
+      type: dnf
+      summary: Fedora packages.
+      run: sudo dnf install -y inkscape
+      version_hint: distro
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Debian/Ubuntu packages.
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y inkscape
+      version_hint: distro
+      requires_sudo: true
+    pacman:
+      type: pacman
+      summary: Arch extra repo.
+      run: sudo pacman -S --needed --noconfirm inkscape
+      version_hint: distro
+      requires_sudo: true
+category: media
+tags: [vector, svg, editor]
+homepage: https://inkscape.org
+provides:
+  binaries: [inkscape]

@@ -1,0 +1,39 @@
+name: keepassxc
+summary: KeePassXC password manager.
+verify: command -v keepassxc || flatpak info org.keepassxc.KeePassXC >/dev/null 2>&1
+version_check: |
+  keepassxc --version 2>/dev/null \
+    || flatpak info org.keepassxc.KeePassXC 2>/dev/null | awk '/^ *Version:/ {print $2; exit}'
+cast:
+  default: dnf
+  channels:
+    dnf:
+      type: dnf
+      summary: Fedora packages.
+      run: sudo dnf install -y keepassxc
+      version_hint: distro
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Debian/Ubuntu packages.
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y keepassxc
+      version_hint: distro
+      requires_sudo: true
+    pacman:
+      type: pacman
+      summary: Arch community repo.
+      run: sudo pacman -S --needed --noconfirm keepassxc
+      version_hint: distro
+      requires_sudo: true
+    flatpak:
+      type: flatpak
+      summary: Flathub (sandboxed; browser integration limited).
+      run: flatpak install -y --user flathub org.keepassxc.KeePassXC
+      version_hint: latest
+category: security
+tags: [password-manager, keepass]
+homepage: https://keepassxc.org
+provides:
+  binaries: [keepassxc]

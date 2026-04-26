@@ -1,0 +1,47 @@
+name: steam
+summary: Steam gaming client.
+verify: command -v steam || flatpak info com.valvesoftware.Steam >/dev/null 2>&1
+version_check: |
+  steam --version 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)+' | head -n 1 \
+    || flatpak info com.valvesoftware.Steam 2>/dev/null | awk '/^ *Version:/ {print $2; exit}'
+cast:
+  default: dnf
+  channels:
+    dnf:
+      type: dnf
+      summary: Fedora via RPM Fusion non-free (recommended — native, integrates with system).
+      run: |
+        release=$(rpm -E %fedora)
+        # Ensure RPM Fusion non-free is enabled (Nobara already has it; plain Fedora may not).
+        if ! rpm -q rpmfusion-nonfree-release >/dev/null 2>&1; then
+          sudo dnf install -y \
+            "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${release}.noarch.rpm"
+        fi
+        sudo dnf install -y steam
+      version_hint: distro
+      requires_sudo: true
+    flatpak:
+      type: flatpak
+      summary: Flathub (sandboxed; better isolation, weaker controller/peripheral integration).
+      run: flatpak install -y --user flathub com.valvesoftware.Steam
+      version_hint: latest
+    apt:
+      type: apt
+      summary: Debian/Ubuntu packages (multiverse / non-free required).
+      run: |
+        sudo dpkg --add-architecture i386
+        sudo apt-get update
+        sudo apt-get install -y steam-installer || sudo apt-get install -y steam
+      version_hint: distro
+      requires_sudo: true
+    pacman:
+      type: pacman
+      summary: Arch multilib repo (multilib must be enabled in /etc/pacman.conf).
+      run: sudo pacman -S --needed --noconfirm steam
+      version_hint: distro
+      requires_sudo: true
+category: gaming
+tags: [games, valve]
+homepage: https://store.steampowered.com
+provides:
+  binaries: [steam]

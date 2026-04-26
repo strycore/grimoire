@@ -99,7 +99,7 @@ pub fn run(cli: Cli) -> Result<()> {
 
 fn ls(args: LsArgs) -> Result<()> {
     let g = Grimoire::load()?;
-    let mut rows: Vec<(String, &str, String)> = g
+    let mut rows: Vec<(String, Source, String)> = g
         .iter()
         .filter(|(_, e)| match (args.personal, args.embedded) {
             (true, _) => e.source == Source::Personal,
@@ -110,13 +110,7 @@ fn ls(args: LsArgs) -> Result<()> {
             Some(c) => e.spell.category.as_deref() == Some(c.as_str()),
             None => true,
         })
-        .map(|(name, e)| {
-            let src = match e.source {
-                Source::Embedded => "embedded",
-                Source::Personal => "personal",
-            };
-            (name.clone(), src, e.spell.summary.clone())
-        })
+        .map(|(name, e)| (name.clone(), e.source, e.spell.summary.clone()))
         .collect();
 
     rows.sort_by(|a, b| a.0.cmp(&b.0));
@@ -126,15 +120,29 @@ fn ls(args: LsArgs) -> Result<()> {
         return Ok(());
     }
 
+    let any_personal = rows.iter().any(|(_, src, _)| *src == Source::Personal);
     let name_width = rows.iter().map(|(n, _, _)| n.len()).max().unwrap_or(0);
+
     for (name, src, summary) in rows {
-        println!(
-            "  {:<width$}  [{}]  {}",
-            name,
-            src,
-            summary,
-            width = name_width
-        );
+        if any_personal {
+            // Visually distinguish personal spells with a `~` prefix (mirrors
+            // the `~/.config` location they live in). Embedded gets a blank
+            // prefix so columns line up.
+            let prefix = match src {
+                Source::Personal => "~",
+                Source::Embedded => " ",
+            };
+            println!(
+                "  {} {:<width$}  {}",
+                prefix,
+                name,
+                summary,
+                width = name_width
+            );
+        } else {
+            // No personal spells loaded: drop the prefix column entirely.
+            println!("  {:<width$}  {}", name, summary, width = name_width);
+        }
     }
     Ok(())
 }

@@ -14,6 +14,7 @@
 
 use anyhow::{Context, Result, bail};
 use serde::{Deserialize, Serialize};
+use std::io::IsTerminal;
 use std::os::unix::fs::PermissionsExt;
 use std::path::{Path, PathBuf};
 use std::process::Command;
@@ -177,7 +178,14 @@ pub fn check_quiet() -> Option<String> {
 }
 
 /// Print a one-line nag if a newer release is available. No-op otherwise.
+///
+/// Goes to stderr so a piped stdout (`grimoire ls | …`) is unaffected, and is
+/// further gated on stderr being an interactive terminal so cron/journald/
+/// `2>&1 | foo` setups don't pick it up either.
 pub fn maybe_nag() {
+    if !std::io::stderr().is_terminal() {
+        return;
+    }
     if let Some(v) = check_quiet() {
         eprintln!("\n✨ grimoire {v} is available — run `grimoire upgrade`");
     }

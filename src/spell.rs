@@ -294,7 +294,7 @@ mod tests {
 
     fn rust_dev() -> &'static str {
         r#"
-name: rust-dev
+name: rust
 summary: Rust toolchain
 verify: command -v cargo && command -v rustc
 version_check: rustc --version | awk '{print $2}'
@@ -319,7 +319,7 @@ category: development
     #[test]
     fn parses_minimal_spell() {
         let s = Spell::from_yaml(rust_dev()).unwrap();
-        assert_eq!(s.name, "rust-dev");
+        assert_eq!(s.name, "rust");
         assert_eq!(s.cast.default, "rustup");
         assert!(s.cast.channels.contains_key("dnf"));
         assert_eq!(s.cast.channels["dnf"].kind, ChannelType::Dnf);

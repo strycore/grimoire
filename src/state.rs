@@ -135,7 +135,7 @@ mod tests {
     fn record_roundtrip() {
         let log = temp_log();
         log.record(&CastEvent {
-            spell: "rust-dev".into(),
+            spell: "rust".into(),
             channel: "rustup".into(),
             exit_code: 0,
             version_before: None,

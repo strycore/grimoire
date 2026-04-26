@@ -92,6 +92,18 @@ pub enum ManifestSource {
     Project,
     /// `~/.config/grimoire/manifest.toml`.
     User,
+    /// Path supplied on the CLI via `--manifest`.
+    Explicit,
+}
+
+/// Load a manifest from an explicit path, bypassing discovery.
+pub fn load_explicit(path: &Path) -> Result<Discovered> {
+    let manifest = Manifest::from_file(path)?;
+    Ok(Discovered {
+        manifest,
+        path: path.to_path_buf(),
+        source: ManifestSource::Explicit,
+    })
 }
 
 /// Discover the active manifest. Search precedence:
@@ -148,20 +160,20 @@ mod tests {
     fn parses_basic_manifest() {
         let s = r#"
 spells = [
-  "rust-dev >= 1.95",
-  "bun-dev >= 1.0",
-  "android-dev",
+  "rust >= 1.95",
+  "bun >= 1.0",
+  "android-studio",
 ]
 
-[overrides.rust-dev]
+[overrides.rust]
 channel = "rustup"
 "#;
         let m = Manifest::from_toml(s).unwrap();
         assert_eq!(m.spells.len(), 3);
-        assert_eq!(m.overrides["rust-dev"].channel.as_deref(), Some("rustup"));
+        assert_eq!(m.overrides["rust"].channel.as_deref(), Some("rustup"));
 
         let reqs = m.requirements(None).unwrap();
-        assert_eq!(reqs[0].name, "rust-dev");
+        assert_eq!(reqs[0].name, "rust");
         assert!(reqs[0].satisfied_by("1.95.0"));
         assert!(!reqs[0].satisfied_by("1.94.0"));
     }
@@ -172,7 +184,7 @@ channel = "rustup"
 spells = []
 
 [profiles.work]
-spells = ["rust-dev", "slack"]
+spells = ["rust", "slack"]
 
 [profiles.gaming]
 spells = ["lutris", "discord"]
@@ -180,7 +192,7 @@ spells = ["lutris", "discord"]
         let m = Manifest::from_toml(s).unwrap();
         let work = m.requirements(Some("work")).unwrap();
         assert_eq!(work.len(), 2);
-        assert_eq!(work[0].name, "rust-dev");
+        assert_eq!(work[0].name, "rust");
     }
 
     #[test]
@@ -205,11 +217,30 @@ spells = ["lutris", "discord"]
                 .as_nanos()
         ));
         std::fs::create_dir_all(&dir).unwrap();
-        std::fs::write(dir.join(".grimoire.toml"), r#"spells = ["rust-dev"]"#).unwrap();
+        std::fs::write(dir.join(".grimoire.toml"), r#"spells = ["rust"]"#).unwrap();
 
         let d = discover(&dir).unwrap().expect("manifest should be found");
         assert_eq!(d.source, ManifestSource::Project);
         assert_eq!(d.path, dir.join(".grimoire.toml"));
+        assert_eq!(d.manifest.spells.len(), 1);
+    }
+
+    #[test]
+    fn load_explicit_reads_arbitrary_path() {
+        let dir = std::env::temp_dir().join(format!(
+            "grimoire-explicit-{}",
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::create_dir_all(&dir).unwrap();
+        let path = dir.join("custom.toml");
+        std::fs::write(&path, r#"spells = ["rust"]"#).unwrap();
+
+        let d = load_explicit(&path).expect("explicit load works");
+        assert_eq!(d.source, ManifestSource::Explicit);
+        assert_eq!(d.path, path);
         assert_eq!(d.manifest.spells.len(), 1);
     }
 

@@ -154,10 +154,10 @@ mod tests {
         assert!(!g.is_empty(), "at least one embedded spell expected");
         // Reference spells we shipped with the spec:
         for required in [
-            "rust-dev",
-            "bun-dev",
-            "java-sdk",
-            "android-dev",
+            "rust",
+            "bun",
+            "java",
+            "android-studio",
             "blender",
             "discord",
         ] {

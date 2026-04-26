@@ -17,7 +17,7 @@ shell-based, and editable by hand.
 
 | Term | Meaning |
 |---|---|
-| **spell** | A YAML file declaring one desired state (e.g. `rust-dev.yaml`). |
+| **spell** | A YAML file declaring one desired state (e.g. `rust.yaml`). |
 | **grimoire** | The collection of available spells (bundled into the binary; extended by the user's personal spell directory). |
 | **channel** | A specific way to install/reach the state (e.g. `flatpak`, `dnf`, `upstream`, `rustup`). A spell has one or more channels; one is the default. |
 | **cast** | The act of running a channel to reach the state. Idempotent — `verify` runs first; if it passes, cast is a no-op. |
@@ -30,7 +30,7 @@ shell-based, and editable by hand.
 
 ```yaml
 # REQUIRED
-name: rust-dev                       # ^[a-z][a-z0-9-]+$, unique across the grimoire
+name: rust                           # ^[a-z][a-z0-9-]+$, unique across the grimoire
 summary: One-line description shown in listings.
 verify: |                            # bash; exits 0 iff state is reached
   command -v cargo && command -v rustc
@@ -65,7 +65,7 @@ version_check: rustc --version | awk '{print $2}'
                                      # bash; prints current installed version on stdout.
                                      # Empty/non-zero exit ⇒ not installed (same as verify=false).
 
-requires: ["java-sdk >= 17"]         # other spells; same constraint syntax as manifests
+requires: ["java >= 17"]             # other spells; same constraint syntax as manifests
 system_requires: [cc, pkg-config]    # bare binaries that must be in PATH before cast.
                                      # Missing binaries are installed via the distro
                                      # package manager (dnf/apt/pacman) — not modeled
@@ -101,10 +101,10 @@ Used in manifest entries and `requires`. Comma-separated comparators (PEP-440 / 
 Operators: `>=`, `>`, `<=`, `<`, `==`, `!=`. Multiple comparators combine with implicit AND.
 
 ```
-rust-dev >= 1.95
-java-sdk >= 18, < 20
+rust >= 1.95
+java >= 18, < 20
 android-studio == 2025.1.2.12
-bun-dev
+bun
 ```
 
 Versions compare semver-first (dot-separated numerics + optional pre-release after `-`),
@@ -119,14 +119,14 @@ compare correctly because each component is numeric.
 
 ```toml
 spells = [
-  "rust-dev >= 1.95",
-  "bun-dev >= 1.0",
-  "android-dev",
-  "java-sdk >= 18, < 20",
+  "rust >= 1.95",
+  "bun >= 1.0",
+  "android-studio",
+  "java >= 18, < 20",
 ]
 
 # Optional per-spell channel overrides for this project
-[overrides.rust-dev]
+[overrides.rust]
 channel = "rustup"
 ```
 
@@ -151,7 +151,7 @@ Either manifest may declare named profiles to switch between sets:
 spells = []                          # base set; can be empty
 
 [profiles.work]
-spells = ["rust-dev", "slack", "my-dotfiles"]
+spells = ["rust", "slack", "my-dotfiles"]
 
 [profiles.gaming]
 spells = ["lutris", "discord", "steam"]
@@ -203,10 +203,12 @@ grimoire cast [<spell> ...]            Cast missing + outdated spells. With no
                                        or user manifest if no .grimoire.toml.
   --via <channel>                      Override channel for the named spell.
   --profile <name>                     Use a named profile from manifest.
+  --manifest <path>                    Use the manifest at <path>; bypasses discovery.
   --recast                             Force recast even if state is drifted/invalid.
   --dry-run                            Print plan, don't execute.
 
 grimoire scry [<spell> ...]            Report state. Reads manifest like cast.
+  --manifest <path>                    Use the manifest at <path>; bypasses discovery.
   --check-updates                      Run update probes on cast/outdated spells.
   --explain <spell>                    Show why a spell is in its current state.
 
@@ -235,12 +237,12 @@ grimoire log                           Tail the cast event log.
 github.com/<org>/grimoire/
   src/                                 # Rust source
   spells/                              # bundled, shareable spells (PR target)
-    rust-dev.yaml
-    android-dev.yaml
+    rust.yaml
+    android-studio.yaml
     blender.yaml
     discord.yaml
-    bun-dev.yaml
-    java-sdk.yaml
+    bun.yaml
+    java.yaml
     ...
   schema/                              # JSON Schema for spells + manifests
     spell.schema.json

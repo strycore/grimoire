@@ -1,4 +1,4 @@
-name: java-sdk
+name: java
 summary: OpenJDK toolchain.
 verify: command -v javac && command -v java
 version_check: javac --version | awk '{print $2}'

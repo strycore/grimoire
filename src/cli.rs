@@ -9,6 +9,7 @@ use crate::state::CastLog;
 use anyhow::{Context, Result, bail};
 use clap::{Parser, Subcommand};
 use std::collections::HashMap;
+use std::path::PathBuf;
 
 #[derive(Parser)]
 #[command(
@@ -63,6 +64,10 @@ pub struct ScryArgs {
     /// Use a named profile from the manifest.
     #[arg(long)]
     pub profile: Option<String>,
+    /// Path to a manifest file. Bypasses discovery
+    /// (.grimoire.toml walk-up + ~/.config/grimoire/manifest.toml).
+    #[arg(long, value_name = "PATH")]
+    pub manifest: Option<PathBuf>,
 }
 
 #[derive(clap::Args)]
@@ -82,6 +87,10 @@ pub struct CastArgs {
     /// Use a named profile from the manifest.
     #[arg(long)]
     pub profile: Option<String>,
+    /// Path to a manifest file. Bypasses discovery
+    /// (.grimoire.toml walk-up + ~/.config/grimoire/manifest.toml).
+    #[arg(long, value_name = "PATH")]
+    pub manifest: Option<PathBuf>,
 }
 
 #[derive(clap::Args)]
@@ -206,7 +215,7 @@ fn scry_cmd(args: ScryArgs) -> Result<()> {
                 })
                 .collect()
         }
-        None => match manifest::discover(&cwd()?)? {
+        None => match resolve_manifest(args.manifest.as_deref(), false)? {
             Some(d) => {
                 announce_manifest(&d);
                 let seeds = d.manifest.requirements(args.profile.as_deref())?;
@@ -277,9 +286,8 @@ fn cast_cmd(args: CastArgs) -> Result<()> {
         if args.via.is_some() {
             bail!("--via requires a single spell name");
         }
-        let discovered = manifest::discover(&cwd()?)?.context(
-            "no manifest found (.grimoire.toml in cwd or ancestors, or ~/.config/grimoire/manifest.toml)",
-        )?;
+        let discovered = resolve_manifest(args.manifest.as_deref(), true)?
+            .expect("resolve_manifest returns Some when require=true or errors");
         announce_manifest(&discovered);
         let seeds = discovered.manifest.requirements(args.profile.as_deref())?;
         let overrides: HashMap<String, String> = discovered
@@ -440,8 +448,27 @@ fn announce_manifest(d: &Discovered) {
     let kind = match d.source {
         ManifestSource::Project => "project manifest",
         ManifestSource::User => "user manifest",
+        ManifestSource::Explicit => "manifest",
     };
     eprintln!("⌥ {kind}: {}", d.path.display());
+}
+
+/// Pick a manifest: explicit path wins, else fall back to discovery.
+/// When `require` is true, returns `Err` if nothing is found; otherwise `Ok(None)`.
+fn resolve_manifest(
+    explicit: Option<&std::path::Path>,
+    require: bool,
+) -> Result<Option<Discovered>> {
+    if let Some(p) = explicit {
+        return Ok(Some(manifest::load_explicit(p)?));
+    }
+    let found = manifest::discover(&cwd()?)?;
+    if found.is_none() && require {
+        bail!(
+            "no manifest found (.grimoire.toml in cwd or ancestors, or ~/.config/grimoire/manifest.toml; or pass --manifest <path>)"
+        );
+    }
+    Ok(found)
 }
 
 fn cwd() -> Result<std::path::PathBuf> {

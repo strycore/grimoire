@@ -61,9 +61,9 @@ impl Requirement {
 }
 
 /// Parse a manifest entry like:
-///   "rust-dev"
-///   "rust-dev >= 1.95"
-///   "java-sdk >= 18, < 20"
+///   "rust"
+///   "rust >= 1.95"
+///   "java >= 18, < 20"
 ///   "android-studio == 2025.1.2.12"
 pub fn parse(s: &str) -> Result<Requirement> {
     let s = s.trim();
@@ -147,16 +147,16 @@ mod tests {
 
     #[test]
     fn bare_name() {
-        let r = parse("rust-dev").unwrap();
-        assert_eq!(r.name, "rust-dev");
+        let r = parse("rust").unwrap();
+        assert_eq!(r.name, "rust");
         assert!(r.constraints.is_empty());
         assert!(r.satisfied_by("0.0.1")); // anything satisfies an empty constraint set
     }
 
     #[test]
     fn single_min() {
-        let r = parse("rust-dev >= 1.95").unwrap();
-        assert_eq!(r.name, "rust-dev");
+        let r = parse("rust >= 1.95").unwrap();
+        assert_eq!(r.name, "rust");
         assert_eq!(r.constraints.len(), 1);
         assert!(r.satisfied_by("1.95.0"));
         assert!(r.satisfied_by("1.96.0"));
@@ -165,7 +165,7 @@ mod tests {
 
     #[test]
     fn range() {
-        let r = parse("java-sdk >= 18, < 20").unwrap();
+        let r = parse("java >= 18, < 20").unwrap();
         assert_eq!(r.constraints.len(), 2);
         assert!(r.satisfied_by("18.0.1"));
         assert!(r.satisfied_by("19.0.0"));
@@ -190,8 +190,8 @@ mod tests {
 
     #[test]
     fn whitespace_tolerance() {
-        let r = parse("  rust-dev   >=1.95  ").unwrap();
-        assert_eq!(r.name, "rust-dev");
+        let r = parse("  rust   >=1.95  ").unwrap();
+        assert_eq!(r.name, "rust");
         assert!(r.satisfied_by("1.95"));
     }
 

@@ -1,4 +1,4 @@
-name: bun-dev
+name: bun
 summary: Bun JavaScript runtime + package manager.
 verify: command -v bun
 version_check: bun --version

@@ -12,10 +12,10 @@ A *manifest* — usually committed to a project repo as `.grimoire.toml` — dec
 
 ```toml
 spells = [
-  "rust-dev >= 1.95",
-  "bun-dev >= 1.0",
-  "java-sdk >= 18, < 20",
-  "android-dev",
+  "rust >= 1.95",
+  "bun >= 1.0",
+  "java >= 18, < 20",
+  "android-studio",
 ]
 ```
 
@@ -67,13 +67,13 @@ Requires the Rust toolchain (rustup or distro-packaged) and a C compiler (`rusql
 ```sh
 grimoire ls                              # list available spells
 grimoire ls --category development
-grimoire show rust-dev                   # render a spell
+grimoire show rust                       # render a spell
 
-grimoire scry rust-dev                   # status of one spell + version
-grimoire cast rust-dev                   # cast (idempotent — no-op if already cast)
-grimoire cast rust-dev --via dnf         # pick a non-default channel
-grimoire cast rust-dev --recast          # force re-run even if verify passes
-grimoire cast rust-dev --recast --dry-run  # show what would run, don't execute
+grimoire scry rust                       # status of one spell + version
+grimoire cast rust                       # cast (idempotent — no-op if already cast)
+grimoire cast rust --via dnf             # pick a non-default channel
+grimoire cast rust --recast              # force re-run even if verify passes
+grimoire cast rust --recast --dry-run    # show what would run, don't execute
 ```
 
 ### Manifest-driven (multi-spell)
@@ -82,17 +82,17 @@ Drop a `.grimoire.toml` at the root of a project:
 
 ```toml
 spells = [
-  "rust-dev >= 1.95",
-  "bun-dev >= 1.0",
-  "java-sdk >= 18, < 20",
-  "android-dev",
+  "rust >= 1.95",
+  "bun >= 1.0",
+  "java >= 18, < 20",
+  "android-studio",
 ]
 
-[overrides.rust-dev]
+[overrides.rust]
 channel = "rustup"
 
 [profiles.work]
-spells = ["rust-dev", "slack"]
+spells = ["rust", "slack"]
 ```
 
 Then from anywhere inside the project tree:
@@ -127,15 +127,15 @@ config existing.
 A spell can declare other spells it needs (`requires:`) and bare system binaries it expects in `$PATH` (`system_requires:`):
 
 ```yaml
-name: rust-dev
+name: rust
 requires: []
 system_requires: [cc, pkg-config, make]
 
-name: android-dev
-requires: ["java-sdk >= 17"]
+name: android-studio
+requires: ["java >= 17"]
 ```
 
-`grimoire cast android-dev` (or `scry`) walks the spell graph: `java-sdk` gets checked/cast first, in topological order. Constraints from multiple dependents are AND-merged. Cycles are detected and refused.
+`grimoire cast android-studio` (or `scry`) walks the spell graph: `java` gets checked/cast first, in topological order. Constraints from multiple dependents are AND-merged. Cycles are detected and refused.
 
 `system_requires` entries are bare binary names (e.g. `cc`, `pkg-config`, `make`, `curl`, `wget`, `git`) — missing ones are installed via the active distro's package manager before the cast runs, without being modeled as full spells.
 

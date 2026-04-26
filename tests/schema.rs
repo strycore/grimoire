@@ -186,17 +186,17 @@ fn manifest_schema_validates_typical_project_manifest() {
     let validator = load_validator("manifest.schema.json");
     let toml_str = r#"
 spells = [
-  "rust-dev >= 1.95",
-  "bun-dev >= 1.0",
-  "java-sdk >= 18, < 20",
-  "android-dev",
+  "rust >= 1.95",
+  "bun >= 1.0",
+  "java >= 18, < 20",
+  "android-studio",
 ]
 
-[overrides.rust-dev]
+[overrides.rust]
 channel = "rustup"
 
 [profiles.work]
-spells = ["rust-dev", "slack"]
+spells = ["rust", "slack"]
 "#;
     let errs = validation_errors(&validator, &toml_to_json(toml_str));
     assert!(errs.is_empty(), "schema rejected valid manifest: {errs:?}");
@@ -208,7 +208,7 @@ fn manifest_schema_rejects_unknown_field_in_override() {
     let toml_str = r#"
 spells = []
 
-[overrides.rust-dev]
+[overrides.rust]
 mystery = "huh"
 "#;
     let errs = validation_errors(&validator, &toml_to_json(toml_str));

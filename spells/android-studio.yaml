@@ -1,10 +1,10 @@
-name: android-dev
+name: android-studio
 summary: Android Studio + SDK + ADB.
 verify: |
   command -v adb && test -x "${SOFTWARE_DIR:-$HOME/Software}/AndroidStudio/bin/studio.sh"
 version_check: adb --version | awk '/Version/ {print $5}'
 requires:
-  - "java-sdk >= 17"
+  - "java >= 17"
   - flathub
 cast:
   default: flatpak
@@ -33,7 +33,7 @@ cast:
         echo "  Run $software/AndroidStudio/bin/studio.sh once to register the .desktop launcher."
       version_hint: pinned
 after: |
-  echo "Run android-studio once to complete SDK setup, then re-run grimoire scry android-dev."
+  echo "Run android-studio once to complete SDK setup, then re-run grimoire scry android-studio."
 category: development
 tags: [mobile, android, ide]
 homepage: https://developer.android.com/studio

@@ -5,7 +5,7 @@ version_check: |
   awk -F= '/^application.version=/ {print $2; exit}' \
     "${SOFTWARE_DIR:-$HOME/Software}/Ghidra/Ghidra/application.properties" 2>/dev/null
 requires:
-  - "java-sdk >= 21"
+  - "java >= 21"
 cast:
   default: tarball
   channels:

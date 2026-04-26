@@ -23,12 +23,31 @@ Then `grimoire cast` (eventually) ensures the machine reaches that state.
 
 See [SPEC.md](./SPEC.md) for the full design.
 
-## Build
+## Install
+
+Pre-built binary from the latest GitHub release (Linux x86_64, no Rust toolchain needed):
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/strycore/grimoire/main/install.sh | bash
+```
+
+Pin a version, or change the install dir:
+
+```sh
+curl -fsSL .../install.sh | VERSION=v0.1.0 bash
+curl -fsSL .../install.sh | GRIMOIRE_INSTALL_DIR=$HOME/bin bash
+```
+
+The script downloads the release tarball, verifies its SHA-256, and drops the `grimoire` binary into `~/.local/bin`. Make sure that's on your `$PATH`.
+
+## Build from source
 
 ```sh
 cargo build --release
 ./target/release/grimoire --help
 ```
+
+Requires the Rust toolchain (rustup or distro-packaged) and a C compiler (`rusqlite` is configured with `bundled`, which compiles SQLite at build time).
 
 ## What works today
 

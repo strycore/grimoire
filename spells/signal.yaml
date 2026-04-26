@@ -1,0 +1,41 @@
+name: signal
+summary: Signal Desktop messenger.
+requires: [flathub]
+verify: flatpak info org.signal.Signal >/dev/null 2>&1 || command -v signal-desktop
+version_check: |
+  flatpak info org.signal.Signal 2>/dev/null | awk '/^ *Version:/ {print $2; exit}' \
+    || signal-desktop --version 2>/dev/null | awk '{print $NF}'
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — sandboxed, auto-updates).
+      run: flatpak install -y --user flathub org.signal.Signal
+      version_hint: latest
+    snap:
+      type: snap
+      summary: Snap (requires snapd).
+      run: sudo snap install signal-desktop
+      version_hint: latest
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Signal's official APT repo (Debian/Ubuntu).
+      run: |
+        tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+        curl -fsSL https://updates.signal.org/desktop/apt/keys.asc \
+          | gpg --dearmor -o "$tmp/signal-desktop-keyring.gpg"
+        sudo install -D -m 0644 "$tmp/signal-desktop-keyring.gpg" \
+          /usr/share/keyrings/signal-desktop-keyring.gpg
+        echo 'deb [arch=amd64 signed-by=/usr/share/keyrings/signal-desktop-keyring.gpg] https://updates.signal.org/desktop/apt xenial main' \
+          | sudo tee /etc/apt/sources.list.d/signal-xenial.list >/dev/null
+        sudo apt-get update
+        sudo apt-get install -y signal-desktop
+      version_hint: latest
+      requires_sudo: true
+category: communication
+tags: [chat, messenger, privacy]
+homepage: https://signal.org
+provides:
+  binaries: [signal-desktop]

@@ -1,0 +1,37 @@
+name: waydroid
+summary: Android container for Linux (runs Android apps in a Wayland session).
+verify: command -v waydroid
+version_check: waydroid --version 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)+' | head -n 1
+cast:
+  default: apt
+  channels:
+    apt:
+      type: apt
+      summary: Official Waydroid APT repo (Debian/Ubuntu) — adds repo and installs.
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y curl ca-certificates
+        curl -fsSL https://repo.waydro.id | sudo bash
+        sudo apt-get install -y waydroid
+      version_hint: latest
+      requires_sudo: true
+    dnf:
+      type: dnf
+      summary: Fedora packages.
+      run: sudo dnf install -y waydroid
+      version_hint: distro
+      requires_sudo: true
+    pacman:
+      type: pacman
+      summary: Arch extra repo.
+      run: sudo pacman -S --needed --noconfirm waydroid
+      version_hint: distro
+      requires_sudo: true
+after: |
+  echo "Initialize the image with: sudo waydroid init"
+  echo "Then start the session: waydroid session start"
+category: virtualization
+tags: [android, container, emulator]
+homepage: https://waydro.id
+provides:
+  binaries: [waydroid]

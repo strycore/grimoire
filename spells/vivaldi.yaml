@@ -1,0 +1,39 @@
+name: vivaldi
+summary: Vivaldi web browser.
+verify: command -v vivaldi || command -v vivaldi-stable
+version_check: |
+  bin=$(command -v vivaldi || command -v vivaldi-stable)
+  "$bin" --version 2>/dev/null | grep -oE '[0-9]+(\.[0-9]+)+' | head -n 1
+cast:
+  default: dnf
+  channels:
+    dnf:
+      type: dnf
+      summary: Official Vivaldi RPM repo + vivaldi-stable package.
+      run: |
+        sudo dnf install -y dnf-plugins-core
+        sudo dnf config-manager addrepo --overwrite \
+          --from-repofile=https://repo.vivaldi.com/stable/vivaldi-fedora.repo
+        sudo dnf install -y vivaldi-stable
+      version_hint: latest
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Official Vivaldi apt repo + vivaldi-stable package.
+      run: |
+        sudo apt-get install -y curl
+        sudo install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://repo.vivaldi.com/archive/linux_signing_key.pub \
+          | gpg --dearmor | sudo tee /etc/apt/keyrings/vivaldi.gpg > /dev/null
+        sudo chmod a+r /etc/apt/keyrings/vivaldi.gpg
+        echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/vivaldi.gpg] https://repo.vivaldi.com/archive/deb/ stable main" \
+          | sudo tee /etc/apt/sources.list.d/vivaldi-archive.list > /dev/null
+        sudo apt-get update
+        sudo apt-get install -y vivaldi-stable
+      version_hint: latest
+      requires_sudo: true
+category: communication
+tags: [browser]
+homepage: https://vivaldi.com
+provides:
+  binaries: [vivaldi, vivaldi-stable]

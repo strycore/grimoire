@@ -314,6 +314,13 @@ fn cast_cmd(args: CastArgs) -> Result<()> {
                 if force_recast_seed {
                     do_cast_step(step, via, args.dry_run, true, &mut summary)?;
                 } else {
+                    // Reconcile the menu entry on a no-op cast — keeps spells
+                    // that grew a `desktop:` block from needing `--recast`.
+                    if !args.dry_run
+                        && let Err(e) = crate::desktop::materialize(step.spell, false)
+                    {
+                        eprintln!("⚠ desktop entry: {e:#}");
+                    }
                     summary.already_cast += 1;
                     eprintln!(
                         "✓ {} already cast{}{}",

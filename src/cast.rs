@@ -37,6 +37,12 @@ pub fn cast(spell: &Spell, opts: CastOptions<'_>) -> Result<Outcome> {
     };
 
     if initial.ok() && !opts.recast {
+        // Reconcile the menu entry even when there's nothing to install — a
+        // spell that grew a `desktop:` block after the user originally cast
+        // it should still pick up the entry on the next no-op run.
+        if let Err(e) = crate::desktop::materialize(spell, false) {
+            eprintln!("⚠ desktop entry: {e:#}");
+        }
         eprintln!(
             "✓ {} already cast{}",
             spell.name,
@@ -69,6 +75,10 @@ pub fn cast(spell: &Spell, opts: CastOptions<'_>) -> Result<Outcome> {
             }
         }
         eprintln!("---");
+        if spell.desktop.is_some() {
+            eprintln!();
+            crate::desktop::materialize(spell, true)?;
+        }
         return Ok(Outcome::DryRun);
     }
 
@@ -156,6 +166,9 @@ pub fn cast(spell: &Spell, opts: CastOptions<'_>) -> Result<Outcome> {
     );
 
     if post.ok() {
+        if let Err(e) = crate::desktop::materialize(spell, false) {
+            eprintln!("⚠ desktop entry: {e:#}");
+        }
         eprintln!(
             "✓ {} cast{}",
             spell.name,

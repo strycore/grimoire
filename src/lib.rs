@@ -8,8 +8,10 @@ pub mod cli;
 pub mod compose;
 pub mod config;
 pub mod constraint;
+pub mod desktop;
 pub mod distro;
 pub mod grimoire;
+pub mod icons;
 pub mod manifest;
 pub mod resolve;
 pub mod scry;
@@ -22,4 +24,6 @@ pub mod version;
 
 pub use crate::grimoire::{Grimoire, Source, SpellEntry};
 pub use crate::manifest::Manifest;
-pub use crate::spell::{Cast, Channel, ChannelType, Parameter, ParameterKind, Spell, VersionHint};
+pub use crate::spell::{
+    Cast, Channel, ChannelType, DesktopEntry, Parameter, ParameterKind, Spell, VersionHint,
+};

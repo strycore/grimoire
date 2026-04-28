@@ -101,6 +101,9 @@
         }
       },
       "description": "Informational. Used for cross-spell reasoning later (e.g. transitive `provides` could obviate `requires`)."
+    },
+    "desktop": {
+      "$ref": "#/$defs/desktop_entry"
     }
   },
   "$defs": {
@@ -209,6 +212,50 @@
         "required": {
           "type": "boolean",
           "description": "Must be supplied (no default, not a secret). Cast fails fast if no value is resolved."
+        }
+      }
+    },
+    "desktop_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "exec"],
+      "description": "XDG menu entry materialized after a successful cast. Maps to a `.desktop` file at `~/.local/share/applications/<spell>.desktop`.",
+      "properties": {
+        "name": {
+          "type": "string",
+          "minLength": 1,
+          "description": "`Name=` — human-readable label shown in app menus."
+        },
+        "exec": {
+          "type": "string",
+          "minLength": 1,
+          "description": "`Exec=` — command line, including any `%F`/`%U` field codes."
+        },
+        "comment": {
+          "type": "string",
+          "description": "`Comment=` — tooltip text. Falls back to the spell's `summary` when omitted."
+        },
+        "icon": {
+          "type": "string",
+          "description": "`Icon=` — stem name (looked up in grimoire's bundled `icons/` and in `~/.config/grimoire/icons/`) or an absolute path to a file the spell author placed."
+        },
+        "categories": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "`Categories=` — XDG menu categories (e.g. `Development`, `Science`)."
+        },
+        "terminal": {
+          "type": "boolean",
+          "description": "`Terminal=` — true for CLI apps that need an emulator window."
+        },
+        "startup_wm_class": {
+          "type": "string",
+          "description": "`StartupWMClass=` — used by some compositors to associate the launched window with this entry (icon-grouping in the dock)."
+        },
+        "mime_types": {
+          "type": "array",
+          "items": { "type": "string" },
+          "description": "`MimeType=` — file types this entry can open."
         }
       }
     }

@@ -170,6 +170,37 @@ docker compose -p <spell-name> ps --status running -q | grep -q .
 
 ---
 
+## Desktop entries
+
+Many spells install software that doesn't auto-create a menu entry — raw AppImages dropped into `$SOFTWARE_DIR`, manually-extracted tarballs, GitHub-release binaries — leaving the user with a working binary on `$PATH` but nothing to launch from their app menu. A `desktop:` block fills the gap: grimoire writes `~/.local/share/applications/<spell>.desktop` and (optionally) installs a bundled icon.
+
+```yaml
+desktop:
+  name: LM Studio                       # Name=
+  exec: lmstudio %U                     # Exec= — field codes are passed through
+  comment: Discover, download, and run local LLMs.   # Comment= — defaults to spell.summary
+  icon: lmstudio                        # Icon= — see "Icon resolution" below
+  categories: [Development, Science]    # Categories=
+  terminal: false                       # Terminal=
+  startup_wm_class: LM Studio           # StartupWMClass= — for window grouping
+  mime_types: []                        # MimeType=
+```
+
+Reconciliation runs at the end of every successful cast (and on no-op already-cast runs), so adding or editing a `desktop:` block then re-running grimoire is enough to update the menu entry.
+
+### Icon resolution
+
+When `icon:` is a stem name (no path separators), grimoire looks in this order and copies the first match into `~/.local/share/icons/hicolor/`:
+
+1. `~/.config/grimoire/icons/<name>.{svg,png}` — personal override
+2. `<repo>/icons/<name>.{svg,png}` — bundled with grimoire
+
+SVG files go to `hicolor/scalable/apps/`, PNG files to `hicolor/256x256/apps/`. After copying, grimoire runs `gtk-update-icon-cache` (best-effort; ignored if the binary isn't present). If no matching file is found, the value is still written verbatim to `Icon=` so a system theme icon can resolve it.
+
+When `icon:` is an absolute path, it's written verbatim and no copy happens — useful for spells whose `after:` hook extracts an icon out of an AppImage or tarball.
+
+---
+
 ## Constraint syntax
 
 Used in manifest entries and `requires`. Comma-separated comparators (PEP-440 / Cargo flavor):
@@ -327,12 +358,14 @@ github.com/<org>/grimoire/
   schema/                              # JSON Schema for spells + manifests
     spell.schema.json
     manifest.schema.json
+  icons/                               # bundled .desktop icons; <spell>.{svg,png}
+    lmstudio.png
   CONTRIBUTING.md
   SPEC.md
   Cargo.toml
 ```
 
-Spells in `spells/` are embedded into the binary at build time (`include_dir!`).
+Spells in `spells/` and icons in `icons/` are embedded into the binary at build time (`include_dir!`).
 Each release ships with a curated set.
 
 ### Runtime (per machine)
@@ -342,6 +375,8 @@ Each release ships with a curated set.
   manifest.toml                        # optional user-level manifest
   spells/                              # personal spells; override embedded by name match
     my-dotfiles.yaml
+  icons/                               # personal icon overrides; win over embedded
+    my-spell.png
   config.toml                          # optional: env exports for spells
 
 ~/.local/state/grimoire/
@@ -351,6 +386,12 @@ Each release ships with a curated set.
   <spell-name>/
     docker-compose.yml                 # fetched from upstream at the pinned ref
     .env                               # materialized parameters + generated secrets
+
+~/.local/share/applications/           # XDG menu entries grimoire writes
+  <spell-name>.desktop
+~/.local/share/icons/hicolor/          # XDG icon tree grimoire copies into
+  256x256/apps/<icon>.png
+  scalable/apps/<icon>.svg
 ```
 
 ### `config.toml`
@@ -405,6 +446,7 @@ DEVELOPMENT_DIR = "/home/me/dev"
 | `compose` channel: `url:` source for unversioned upstreams | not started |
 | `compose` channel: spell-bundled `override:` file (compose.override.yml) | not started |
 | `compose` channel: manifest parameter overrides + interactive prompt | not started |
+| `desktop:` entries: `.desktop` materialization + bundled icons | ✅ |
 | `grimoire scribe` (template scaffold) | 🚧 stub |
 | `grimoire diff` / `log` | not started |
 | Update probes (`--check-updates`) | not started |

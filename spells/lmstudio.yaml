@@ -38,3 +38,10 @@ tags: [llm, ai, local-inference, gui]
 homepage: https://lmstudio.ai
 provides:
   binaries: [lmstudio, lms]
+desktop:
+  name: LM Studio
+  exec: lmstudio %U
+  comment: Discover, download, and run local LLMs.
+  icon: lmstudio
+  categories: [Development, Science, Utility]
+  startup_wm_class: LM Studio

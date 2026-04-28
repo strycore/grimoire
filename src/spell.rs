@@ -44,6 +44,46 @@ pub struct Spell {
     pub before: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub after: Option<String>,
+
+    /// Optional XDG `.desktop` entry. When set, grimoire writes
+    /// `~/.local/share/applications/<spell>.desktop` after a successful cast
+    /// (and reconciles it on subsequent already-cast runs).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub desktop: Option<DesktopEntry>,
+}
+
+/// Declarative XDG menu entry. Maps roughly 1:1 to keys in a `.desktop` file
+/// — see <https://specifications.freedesktop.org/desktop-entry-spec/>.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DesktopEntry {
+    /// `Name=` — human-readable label shown in app menus.
+    pub name: String,
+    /// `Exec=` — command line, including any `%F`/`%U` field codes.
+    pub exec: String,
+    /// `Comment=` — tooltip text. Falls back to the spell's `summary` when
+    /// omitted, since most spells already have a one-line description.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub comment: Option<String>,
+    /// `Icon=` — either a stem name (looked up against `icons/<name>.{svg,png}`
+    /// bundled with grimoire, then `~/.config/grimoire/icons/`, then the
+    /// system theme) or an absolute path to a file the spell author has
+    /// already placed.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub icon: Option<String>,
+    /// `Categories=` — XDG menu categories (e.g. `Development`, `Science`).
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub categories: Vec<String>,
+    /// `Terminal=` — true for CLI apps that need an emulator window.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub terminal: bool,
+    /// `StartupWMClass=` — used by some compositors to associate the
+    /// launched window with this entry (icon-grouping in the dock).
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub startup_wm_class: Option<String>,
+    /// `MimeType=` — file types this entry can open.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub mime_types: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

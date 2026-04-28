@@ -1,0 +1,40 @@
+name: lmstudio
+summary: Run local LLMs with a desktop GUI (LM Studio).
+verify: command -v lmstudio || command -v lms
+version_check: |
+  software="${SOFTWARE_DIR:-$HOME/Software}"
+  if compgen -G "$software/LMStudio/LM-Studio-*.AppImage" >/dev/null; then
+    ls "$software/LMStudio"/LM-Studio-*.AppImage 2>/dev/null \
+      | head -n 1 \
+      | sed -E 's|.*/LM-Studio-([0-9.-]+)-x64\.AppImage$|\1|'
+  else
+    lms --version 2>/dev/null | awk '{print $NF}' | head -n 1
+  fi
+cast:
+  default: appimage
+  channels:
+    appimage:
+      type: shell
+      summary: Pinned GUI AppImage from installers.lmstudio.ai into $SOFTWARE_DIR/LMStudio.
+      run: |
+        version="0.4.12-1"
+        software="${SOFTWARE_DIR:-$HOME/Software}"
+        target_dir="$software/LMStudio"
+        url="https://installers.lmstudio.ai/linux/x64/${version}/LM-Studio-${version}-x64.AppImage"
+        mkdir -p "$target_dir" "$HOME/.local/bin"
+        rm -f "$target_dir"/LM-Studio-*.AppImage
+        echo "Downloading LM Studio ${version}..."
+        curl -fL -o "$target_dir/LM-Studio-${version}-x64.AppImage" "$url"
+        chmod +x "$target_dir/LM-Studio-${version}-x64.AppImage"
+        ln -sf "$target_dir/LM-Studio-${version}-x64.AppImage" "$HOME/.local/bin/lmstudio"
+      version_hint: pinned
+    headless:
+      type: shell
+      summary: Official install.sh for the headless `lms` daemon (servers, CI, no GUI).
+      run: curl -fsSL https://lmstudio.ai/install.sh | bash
+      version_hint: latest
+category: ai
+tags: [llm, ai, local-inference, gui]
+homepage: https://lmstudio.ai
+provides:
+  binaries: [lmstudio, lms]

@@ -1,5 +1,5 @@
 use crate::shell::{self, CheckOutput};
-use crate::spell::Spell;
+use crate::spell::{ChannelType, Spell};
 use crate::state::{CastEvent, CastLog};
 use anyhow::{Context, Result, bail};
 
@@ -60,7 +60,14 @@ pub fn cast(spell: &Spell, opts: CastOptions<'_>) -> Result<Outcome> {
             .with_context(|| format!("spell {} system_requires", spell.name))?;
         eprintln!("\n[dry-run] would run channel `{channel_name}`:");
         eprintln!("---");
-        eprintln!("{}", channel.run.trim_end());
+        match channel.kind {
+            ChannelType::Compose => {
+                crate::compose::cast_compose(spell, channel, true)?;
+            }
+            _ => {
+                eprintln!("{}", channel.run.as_deref().unwrap_or("").trim_end());
+            }
+        }
         eprintln!("---");
         return Ok(Outcome::DryRun);
     }
@@ -77,10 +84,34 @@ pub fn cast(spell: &Spell, opts: CastOptions<'_>) -> Result<Outcome> {
             .with_context(|| format!("spell {} before hook", spell.name))?;
     }
 
-    // 5. Channel run.
+    // 5. Channel run. `compose` channels are dispatched through the
+    //    compose module; everything else is a bash snippet.
     shell::banner(&channel_name, "cast")?;
-    let exit = shell::run("cast", &channel.run)
-        .with_context(|| format!("spell {} cast via {channel_name}", spell.name))?;
+    let exit = match channel.kind {
+        ChannelType::Compose => match crate::compose::cast_compose(spell, channel, false) {
+            Ok(()) => 0,
+            Err(e) => {
+                log_cast(
+                    spell,
+                    &channel_name,
+                    1,
+                    version_before.clone(),
+                    None,
+                    Some(format!("compose cast failed: {e:#}")),
+                );
+                return Err(e)
+                    .with_context(|| format!("spell {} cast via {channel_name}", spell.name));
+            }
+        },
+        _ => {
+            let run = channel
+                .run
+                .as_deref()
+                .expect("non-compose channel must have `run` (validated by Spell::validate)");
+            shell::run("cast", run)
+                .with_context(|| format!("spell {} cast via {channel_name}", spell.name))?
+        }
+    };
     if exit != 0 {
         log_cast(
             spell,

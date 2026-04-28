@@ -107,7 +107,7 @@
     "channel": {
       "type": "object",
       "additionalProperties": false,
-      "required": ["type", "summary", "run"],
+      "required": ["type", "summary"],
       "properties": {
         "type": {
           "type": "string",
@@ -120,7 +120,8 @@
             "snap",
             "cargo",
             "pip",
-            "npm"
+            "npm",
+            "compose"
           ],
           "description": "Channel kind. Drives GUI badges, channel-specific update probes, and implicit distro applicability (e.g. `dnf` ⇒ Fedora-family)."
         },
@@ -131,7 +132,7 @@
         "run": {
           "type": "string",
           "minLength": 1,
-          "description": "Bash snippet executed to install via this channel."
+          "description": "Bash snippet executed to install via this channel. Required for shell-style channels; forbidden for `compose`."
         },
         "version_hint": {
           "type": "string",
@@ -146,6 +147,68 @@
           "type": "array",
           "items": { "type": "string" },
           "description": "Distros this channel applies to. Empty/omitted ⇒ use the implicit list from `type` (e.g. `dnf` ⇒ Fedora-family). Set this only to override that default — for instance to restrict a `shell` channel to one distro, or to broaden a `dnf` channel to OpenSUSE forks."
+        },
+        "repo": {
+          "type": "string",
+          "format": "uri",
+          "description": "Compose channel only. Git URL to clone for the compose source."
+        },
+        "ref": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Compose channel only. Git ref (tag, branch, commit SHA) to pin to."
+        },
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Compose channel only. Subdirectory inside `repo` containing the compose file. Use `.` for repo-root composes."
+        },
+        "compose_file": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Compose channel only. Compose filename within `path`. Defaults to `docker-compose.yml`."
+        },
+        "parameters": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/parameter" },
+          "propertyNames": {
+            "pattern": "^[A-Z_][A-Z0-9_]*$",
+            "description": "Env var name (uppercase, underscores, digits)."
+          },
+          "description": "Compose channel only. Declared environment parameters. Materialized into a `.env` next to the compose file."
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": { "type": { "const": "compose" } },
+            "required": ["type"]
+          },
+          "then": { "required": ["repo", "ref", "path"] },
+          "else": { "required": ["run"] }
+        }
+      ]
+    },
+    "parameter": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "summary": {
+          "type": "string",
+          "description": "One-line description shown in prompts and `grimoire show`."
+        },
+        "default": {
+          "type": "string",
+          "description": "Used when the user hasn't otherwise set the parameter. Mutually exclusive with `kind: secret` and `required: true`."
+        },
+        "kind": {
+          "type": "string",
+          "enum": ["secret"],
+          "description": "`secret` ⇒ generated on first cast and persisted in the service `.env`."
+        },
+        "required": {
+          "type": "boolean",
+          "description": "Must be supplied (no default, not a secret). Cast fails fast if no value is resolved."
         }
       }
     }

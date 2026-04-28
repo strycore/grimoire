@@ -59,7 +59,12 @@ pub struct Channel {
     #[serde(rename = "type")]
     pub kind: ChannelType,
     pub summary: String,
-    pub run: String,
+    /// Bash snippet for shell-style channels (shell/dnf/apt/pacman/flatpak/
+    /// snap/cargo/pip/npm). Required for those types and forbidden for
+    /// `compose`, which derives its own invocation from the source/parameter
+    /// fields below.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub run: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub version_hint: Option<VersionHint>,
     #[serde(default, skip_serializing_if = "is_false")]
@@ -70,6 +75,54 @@ pub struct Channel {
     /// to a single distro, or to broaden a `dnf` channel.
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub distros: Vec<String>,
+
+    // ── compose-only fields ──────────────────────────────────────────────
+    /// Git URL to clone the compose source from. Required for `type:
+    /// compose`; forbidden otherwise.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub repo: Option<String>,
+    /// Git ref (tag, branch, commit SHA) to pin to. Required for `type:
+    /// compose`. Pinning to a release tag is the recommended pattern —
+    /// upstream composes change without warning.
+    #[serde(default, rename = "ref", skip_serializing_if = "Option::is_none")]
+    pub git_ref: Option<String>,
+    /// Subdirectory inside the cloned repo containing the compose file
+    /// (and any sibling files that should be copied alongside it). Use `.`
+    /// for repo-root composes. Required for `type: compose`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub path: Option<String>,
+    /// Compose filename within `path`. Defaults to `docker-compose.yml`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub compose_file: Option<String>,
+    /// Declared environment parameters. Materialized into a `.env` next to
+    /// the compose file at cast time. Compose picks them up via both
+    /// `${VAR}` interpolation and `env_file:` automatically.
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    pub parameters: BTreeMap<String, Parameter>,
+}
+
+/// One declared environment parameter for a `compose` channel.
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Parameter {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub summary: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub default: Option<String>,
+    /// `secret` ⇒ value is auto-generated on first cast and persisted in the
+    /// service's `.env` so subsequent casts reuse it. Omit for plain values.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub kind: Option<ParameterKind>,
+    /// True if the parameter must be supplied (no default, not a secret).
+    /// Casting fails fast if a required parameter has no value resolved.
+    #[serde(default, skip_serializing_if = "is_false")]
+    pub required: bool,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "lowercase")]
+pub enum ParameterKind {
+    Secret,
 }
 
 fn is_false(b: &bool) -> bool {
@@ -77,6 +130,100 @@ fn is_false(b: &bool) -> bool {
 }
 
 impl Channel {
+    /// Cross-field invariants that the JSON schema can't fully express.
+    /// Validates the shell-vs-compose split and parameter shape.
+    pub fn validate(&self, spell_name: &str, channel_key: &str) -> Result<()> {
+        let where_ = || format!("spell {spell_name:?} channel {channel_key:?}");
+        match self.kind {
+            ChannelType::Compose => {
+                if self.run.is_some() {
+                    bail!(
+                        "{}: `run` is not allowed for `type: compose` (the channel \
+                         derives its invocation from repo/ref/path)",
+                        where_(),
+                    );
+                }
+                if self.requires_sudo {
+                    bail!(
+                        "{}: `requires_sudo` is not meaningful for `type: compose`",
+                        where_(),
+                    );
+                }
+                let missing: Vec<&str> = [
+                    ("repo", self.repo.is_none()),
+                    ("ref", self.git_ref.is_none()),
+                    ("path", self.path.is_none()),
+                ]
+                .into_iter()
+                .filter(|(_, m)| *m)
+                .map(|(n, _)| n)
+                .collect();
+                if !missing.is_empty() {
+                    bail!(
+                        "{}: `type: compose` requires {}",
+                        where_(),
+                        missing.join(", "),
+                    );
+                }
+                for (pname, p) in &self.parameters {
+                    if !pname
+                        .chars()
+                        .all(|c| c.is_ascii_uppercase() || c.is_ascii_digit() || c == '_')
+                        || pname.is_empty()
+                        || pname.chars().next().is_some_and(|c| c.is_ascii_digit())
+                    {
+                        bail!(
+                            "{}: parameter name {pname:?} must match [A-Z_][A-Z0-9_]*",
+                            where_(),
+                        );
+                    }
+                    if p.kind == Some(ParameterKind::Secret) && p.default.is_some() {
+                        bail!(
+                            "{}: parameter {pname:?} is `kind: secret` and \
+                             cannot have a `default`",
+                            where_(),
+                        );
+                    }
+                    if p.required && (p.default.is_some() || p.kind.is_some()) {
+                        bail!(
+                            "{}: parameter {pname:?} is `required: true` and \
+                             cannot also have `default` or `kind`",
+                            where_(),
+                        );
+                    }
+                }
+            }
+            _ => {
+                if self.run.is_none() {
+                    bail!(
+                        "{}: `run` is required for `type: {:?}`",
+                        where_(),
+                        self.kind
+                    );
+                }
+                let extras: Vec<&str> = [
+                    ("repo", self.repo.is_some()),
+                    ("ref", self.git_ref.is_some()),
+                    ("path", self.path.is_some()),
+                    ("compose_file", self.compose_file.is_some()),
+                    ("parameters", !self.parameters.is_empty()),
+                ]
+                .into_iter()
+                .filter(|(_, p)| *p)
+                .map(|(n, _)| n)
+                .collect();
+                if !extras.is_empty() {
+                    bail!(
+                        "{}: fields {} are only valid for `type: compose`",
+                        where_(),
+                        extras.join(", "),
+                    );
+                }
+            }
+        }
+        Ok(())
+    }
+
     /// True if this channel applies on `distro`. Universal channel types
     /// (whose implicit list is empty) apply everywhere unless explicitly
     /// restricted via the per-channel `distros: [...]` field.
@@ -152,6 +299,7 @@ pub enum ChannelType {
     Cargo,
     Pip,
     Npm,
+    Compose,
 }
 
 impl ChannelType {
@@ -192,7 +340,8 @@ impl ChannelType {
             | ChannelType::Snap
             | ChannelType::Cargo
             | ChannelType::Pip
-            | ChannelType::Npm => &[],
+            | ChannelType::Npm
+            | ChannelType::Compose => &[],
         }
     }
 }
@@ -258,6 +407,12 @@ impl Spell {
                 self.name,
                 self.cast.default,
             );
+        }
+
+        // Per-channel cross-field invariants. The schema can't fully express
+        // "this field is only valid for that type", so we enforce it here.
+        for (key, ch) in &self.cast.channels {
+            ch.validate(&self.name, key)?;
         }
 
         // Each `requires` entry must parse as a Requirement.

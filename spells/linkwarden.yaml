@@ -1,0 +1,26 @@
+name: linkwarden
+summary: Self-hosted bookmark and archive manager (compose).
+requires: [docker]
+verify: docker compose -p linkwarden ps --status running -q | grep -q .
+cast:
+  default: compose
+  channels:
+    compose:
+      type: compose
+      summary: Official upstream compose, pinned to a release tag.
+      repo: https://github.com/linkwarden/linkwarden
+      ref: v2.14.1
+      path: .
+      parameters:
+        POSTGRES_PASSWORD:
+          summary: Postgres password (auto-generated, persisted in the service .env).
+          kind: secret
+        NEXTAUTH_SECRET:
+          summary: NextAuth session signing secret (auto-generated).
+          kind: secret
+        NEXTAUTH_URL:
+          summary: Public URL the instance will be reached at.
+          default: http://localhost:3000
+category: services
+tags: [bookmarks, self-hosted, docker]
+homepage: https://linkwarden.app

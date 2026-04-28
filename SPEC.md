@@ -39,7 +39,7 @@ cast:
   default: rustup                    # which channel to use unless overridden
   channels:
     rustup:                          # channel key — used as `--via rustup`
-      type: shell                    # shell | dnf | flatpak | snap | cargo | pip | npm
+      type: shell                    # shell | dnf | apt | pacman | flatpak | snap | cargo | pip | npm | compose
       summary: Upstream rustup (rolling stable)
       run: |
         curl --proto '=https' -sSf https://sh.rustup.rs | sh -s -- -y
@@ -83,10 +83,90 @@ after: |                             # post-cast hook; runs after the chosen cha
 ### Field rules
 
 - `name`, `summary`, `verify`, `cast.default`, and at least one `cast.channels[*]` are required.
-- Each channel must have `type` and `run`.
+- Each channel must have `type` and `summary`. Most channel types also require `run`. The `compose` type instead requires its own source/parameter fields (see below) and forbids `run`.
 - All shell snippets run with `set -e` injected by the tool. They are run as the user; sudo is invoked from inside `run` when needed and declared via `requires_sudo: true`.
 - `version_check` is optional but required if any manifest references this spell with a version constraint.
 - `version_hint` values are: `latest` (channel tracks upstream), `distro` (whatever the distro ships), `pinned` (the `run:` installs a fixed version).
+
+---
+
+## Compose channels
+
+A spell can declare its desired state as "this Docker Compose project is up." Use this for self-hosted services (Immich, Linkwarden, Paperless, etc.) that publish a `docker-compose.yml` upstream.
+
+```yaml
+name: linkwarden
+summary: Self-hosted bookmark and archive manager.
+requires: [docker]
+verify: docker compose -p linkwarden ps --status running -q | grep -q .
+cast:
+  default: compose
+  channels:
+    compose:
+      type: compose
+      summary: Official upstream compose, pinned to a release tag.
+      repo: https://github.com/linkwarden/linkwarden
+      ref: v2.9.3                       # release tag — bump to upgrade
+      path: .                           # subdir holding docker-compose.yml
+      compose_file: docker-compose.yml  # optional; defaults to docker-compose.yml
+      parameters:
+        POSTGRES_PASSWORD:
+          summary: Database password (auto-generated, persisted in the service .env).
+          kind: secret
+        NEXTAUTH_SECRET:
+          summary: Session signing secret (auto-generated).
+          kind: secret
+        NEXTAUTH_URL:
+          summary: Public URL for the instance.
+          default: http://localhost:3000
+```
+
+### Source
+
+The compose source is fetched as a shallow git clone at `ref` and the `path` subtree is copied into the service runtime dir. Pinning to a release tag is intentional — upstream composes that reference `:latest` images or change layout silently are a known foot-gun. Bump `ref` to upgrade.
+
+### Parameters
+
+Each parameter declares one env var that lands in the materialized `.env` next to the compose file (which `docker compose` picks up via `${VAR}` interpolation **and** `env_file:`).
+
+| Field | Meaning |
+|---|---|
+| `summary` | Optional; shown in prompts and `grimoire show`. |
+| `default` | Used if the user hasn't set the parameter. |
+| `kind: secret` | First cast generates a value via `openssl rand -hex 32` and persists it in the service `.env`. Subsequent casts reuse it. |
+| `required: true` | Must be supplied (no default). Cast fails fast with an error if missing — interactive prompting is a future addition. |
+
+Resolution order (highest precedence first): user override file (`~/.config/grimoire/services/<name>.env`), persisted secret in the service `.env`, declared `default`. Required parameters with no value abort the cast.
+
+### Service runtime layout
+
+```
+~/.local/share/grimoire/services/<spell-name>/
+  docker-compose.yml         # fetched from upstream
+  .env                       # materialized parameters (incl. generated secrets)
+  ... any sibling files from `path` ...
+```
+
+The compose project name passed to `docker compose -p` is the spell name. So `verify` is conventionally:
+
+```bash
+docker compose -p <spell-name> ps --status running -q | grep -q .
+```
+
+### Lifecycle
+
+- `cast`: prepare the service dir, materialize `.env`, run `docker compose -p <name> -f <file> up -d --remove-orphans`.
+- `verify`: spell-defined (typically the `docker compose ps` check above).
+- Re-cast (e.g. after bumping `ref`) re-fetches the source and re-runs `up -d`. Existing volumes and persisted secrets are preserved.
+- Teardown is not yet a first-class operation; today it's manual: `docker compose -p <name> down` from the service dir.
+
+### Edge cases not covered in v1
+
+- **`url:` source** for projects that publish at an unversioned URL (e.g. Authentik's `goauthentik.io/docker-compose.yml`). Today only `repo + ref + path` is supported.
+- **`override:` file** bundled in the spell to merge a `compose.override.yml` over the upstream compose. Useful for projects that hardcode insecure defaults (e.g. Paperless's `POSTGRES_PASSWORD: paperless`).
+- **`env_template:`** declaring an upstream `.env.example` to inherit defaults from, instead of re-declaring every parameter in the spell.
+- **AIO-style installers** (Nextcloud All-in-One): not compose at all — model these as a `shell` channel running `docker run nextcloud/all-in-one`.
+- **Manifest parameter overrides** (`[parameters.linkwarden] NEXTAUTH_URL = ...`). For now use the per-user `.env` override file.
 
 ---
 
@@ -266,6 +346,11 @@ Each release ships with a curated set.
 
 ~/.local/state/grimoire/
   cast.db                              # SQLite event log
+
+~/.local/share/grimoire/services/      # one dir per cast `compose` channel
+  <spell-name>/
+    docker-compose.yml                 # fetched from upstream at the pinned ref
+    .env                               # materialized parameters + generated secrets
 ```
 
 ### `config.toml`
@@ -316,6 +401,10 @@ DEVELOPMENT_DIR = "/home/me/dev"
 | User config (`~/.config/grimoire/config.toml`) with `[env]` exports | ✅ |
 | JSON Schema files (`schema/spell.schema.json`, `schema/manifest.schema.json`) | ✅ |
 | Schema-validation integration test (every shipped spell) | ✅ |
+| `compose` channel: repo+ref+path source, parameters with default/secret, `.env` materialization, `docker compose up -d` | ✅ |
+| `compose` channel: `url:` source for unversioned upstreams | not started |
+| `compose` channel: spell-bundled `override:` file (compose.override.yml) | not started |
+| `compose` channel: manifest parameter overrides + interactive prompt | not started |
 | `grimoire scribe` (template scaffold) | 🚧 stub |
 | `grimoire diff` / `log` | not started |
 | Update probes (`--check-updates`) | not started |

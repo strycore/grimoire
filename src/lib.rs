@@ -5,6 +5,7 @@
 
 pub mod cast;
 pub mod cli;
+pub mod compose;
 pub mod config;
 pub mod constraint;
 pub mod distro;
@@ -21,4 +22,4 @@ pub mod version;
 
 pub use crate::grimoire::{Grimoire, Source, SpellEntry};
 pub use crate::manifest::Manifest;
-pub use crate::spell::{Cast, Channel, ChannelType, Spell, VersionHint};
+pub use crate::spell::{Cast, Channel, ChannelType, Parameter, ParameterKind, Spell, VersionHint};

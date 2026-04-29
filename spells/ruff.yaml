@@ -1,0 +1,22 @@
+name: ruff
+summary: Extremely fast Python linter and formatter from Astral.
+verify: command -v ruff
+version_check: ruff --version 2>/dev/null | awk '{print $2}'
+cast:
+  default: upstream
+  channels:
+    upstream:
+      type: shell
+      summary: Official Astral standalone installer.
+      run: curl -LsSf https://astral.sh/ruff/install.sh | sh
+      version_hint: latest
+    pip:
+      type: pip
+      summary: Install via pip (PyPI).
+      run: pip install --user ruff
+      version_hint: latest
+category: development
+tags: [python, linter, formatter, cli]
+homepage: https://docs.astral.sh/ruff
+provides:
+  binaries: [ruff]

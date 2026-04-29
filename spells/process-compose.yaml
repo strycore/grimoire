@@ -1,0 +1,19 @@
+name: process-compose
+summary: Schedule and orchestrate processes (docker-compose-like, no containers).
+verify: command -v process-compose
+version_check: process-compose version 2>/dev/null | awk '{print $2}' | head -n 1
+cast:
+  default: user
+  channels:
+    user:
+      type: shell
+      summary: Install latest release into ~/.local/bin (no sudo).
+      run: |
+        mkdir -p "$HOME/.local/bin"
+        sh -c "$(curl --location https://raw.githubusercontent.com/F1bonacc1/process-compose/main/scripts/get-pc.sh)" -- -d -b "$HOME/.local/bin"
+      version_hint: latest
+category: development
+tags: [process-manager, orchestration, cli, go]
+homepage: https://f1bonacc1.github.io/process-compose
+provides:
+  binaries: [process-compose]

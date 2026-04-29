@@ -1,0 +1,24 @@
+name: watchman
+summary: File-watching service from Meta (used by Jest, Metro, etc.).
+verify: command -v watchman
+version_check: watchman --version 2>/dev/null
+cast:
+  default: dnf
+  channels:
+    dnf:
+      type: dnf
+      summary: Fedora package (may lag upstream).
+      run: sudo dnf install -y watchman
+      version_hint: distro
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Debian/Ubuntu package (may lag upstream).
+      run: sudo apt-get install -y watchman
+      version_hint: distro
+      requires_sudo: true
+category: development
+tags: [file-watcher, build-tool, cli]
+homepage: https://facebook.github.io/watchman
+provides:
+  binaries: [watchman, watchmanctl]

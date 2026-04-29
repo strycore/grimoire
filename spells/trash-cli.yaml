@@ -1,0 +1,35 @@
+name: trash-cli
+summary: Command-line interface to the freedesktop.org trashcan.
+verify: command -v trash-put
+version_check: trash-put --version 2>/dev/null | awk '{print $NF}'
+cast:
+  default: dnf
+  channels:
+    dnf:
+      type: dnf
+      summary: Fedora package.
+      run: sudo dnf install -y trash-cli
+      version_hint: distro
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Debian/Ubuntu package.
+      run: sudo apt-get install -y trash-cli
+      version_hint: distro
+      requires_sudo: true
+    pacman:
+      type: pacman
+      summary: Arch package.
+      run: sudo pacman -S --needed --noconfirm trash-cli
+      version_hint: distro
+      requires_sudo: true
+    pip:
+      type: pip
+      summary: Install via pip from PyPI.
+      run: pip install --user trash-cli
+      version_hint: latest
+category: utilities
+tags: [filesystem, trash, cli, freedesktop]
+homepage: https://github.com/andreafrancia/trash-cli
+provides:
+  binaries: [trash, trash-put, trash-list, trash-restore, trash-empty, trash-rm]

@@ -1,0 +1,29 @@
+name: openclaw
+summary: AI assistant framework with gateway, auth, and chat UI.
+verify: command -v openclaw
+version_check: openclaw --version 2>/dev/null
+cast:
+  default: upstream
+  channels:
+    upstream:
+      type: shell
+      summary: Official openclaw.ai installer.
+      run: curl -fsSL https://openclaw.ai/install.sh | bash
+      version_hint: latest
+    local-prefix:
+      type: shell
+      summary: Self-contained install under ~/.openclaw (bundles Node).
+      run: curl -fsSL https://openclaw.ai/install-cli.sh | bash
+      version_hint: latest
+    npm:
+      type: npm
+      summary: Install via npm and run onboarding daemon.
+      run: |
+        npm install -g openclaw@latest
+        openclaw onboard --install-daemon
+      version_hint: latest
+category: ai
+tags: [ai, assistant, llm, gateway, cli]
+homepage: https://openclaw.ai
+provides:
+  binaries: [openclaw]

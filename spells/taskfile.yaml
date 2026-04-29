@@ -1,0 +1,36 @@
+name: taskfile
+summary: Task runner / build tool written in Go (go-task).
+verify: command -v task
+version_check: task --version 2>/dev/null | awk '{print $3}'
+cast:
+  default: user
+  channels:
+    user:
+      type: shell
+      summary: Install latest release into ~/.local/bin (no sudo).
+      run: |
+        mkdir -p "$HOME/.local/bin"
+        sh -c "$(curl --location https://taskfile.dev/install.sh)" -- -d -b "$HOME/.local/bin"
+      version_hint: latest
+    dnf:
+      type: dnf
+      summary: Official Fedora package maintained by the Task team.
+      run: sudo dnf install -y task
+      version_hint: distro
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Official Debian/Ubuntu package maintained by the Task team.
+      run: sudo apt-get install -y task
+      version_hint: distro
+      requires_sudo: true
+    npm:
+      type: npm
+      summary: Cross-platform install via npm.
+      run: npm install -g @go-task/cli
+      version_hint: latest
+category: development
+tags: [build-tool, task-runner, cli, go]
+homepage: https://taskfile.dev
+provides:
+  binaries: [task]

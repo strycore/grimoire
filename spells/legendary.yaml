@@ -1,0 +1,23 @@
+name: legendary
+summary: Open-source Epic Games Store launcher (CLI).
+verify: command -v legendary
+version_check: legendary --version 2>/dev/null | awk '{print $2}'
+cast:
+  default: pip
+  channels:
+    pip:
+      type: pip
+      summary: Install via pip from PyPI (legendary-gl).
+      run: pip install --user legendary-gl
+      version_hint: latest
+    dnf:
+      type: dnf
+      summary: Fedora package.
+      run: sudo dnf install -y legendary
+      version_hint: distro
+      requires_sudo: true
+category: gaming
+tags: [gaming, epic-games, launcher, cli]
+homepage: https://github.com/derrod/legendary
+provides:
+  binaries: [legendary]

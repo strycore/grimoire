@@ -1,0 +1,22 @@
+name: poetry
+summary: Python dependency management and packaging tool.
+verify: command -v poetry
+version_check: poetry --version 2>/dev/null | awk -F'[() ]+' '{print $3}'
+cast:
+  default: upstream
+  channels:
+    upstream:
+      type: shell
+      summary: Official install.python-poetry.org installer (isolated venv).
+      run: curl -sSL https://install.python-poetry.org | python3 -
+      version_hint: latest
+    pip:
+      type: pip
+      summary: Install via pip (PyPI). Prefer pipx in practice.
+      run: pip install --user poetry
+      version_hint: latest
+category: development
+tags: [python, package-manager, dependency-management]
+homepage: https://python-poetry.org
+provides:
+  binaries: [poetry]

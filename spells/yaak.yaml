@@ -1,0 +1,83 @@
+name: yaak
+summary: Yaak — desktop API client (Postman/Insomnia alternative).
+verify: command -v yaak
+version_check: |
+  software="${SOFTWARE_DIR:-$HOME/Software}"
+  if compgen -G "$software/Yaak/yaak_*.AppImage" >/dev/null; then
+    ls "$software/Yaak"/yaak_*.AppImage 2>/dev/null \
+      | head -n 1 \
+      | sed -E 's|.*/yaak_([0-9.]+)_.*\.AppImage$|\1|'
+  else
+    yaak --version 2>/dev/null | awk '{print $NF}'
+  fi
+cast:
+  default: appimage
+  channels:
+    appimage:
+      type: shell
+      summary: Latest AppImage from GitHub releases into $SOFTWARE_DIR/Yaak.
+      run: |
+        software="${SOFTWARE_DIR:-$HOME/Software}"
+        target_dir="$software/Yaak"
+        mkdir -p "$target_dir" "$HOME/.local/bin"
+        url=$(curl -s https://api.github.com/repos/mountain-loop/yaak/releases/latest \
+              | grep -oE '"browser_download_url": "[^"]+_amd64\.AppImage"' \
+              | head -n 1 \
+              | sed -E 's/.*"(http[^"]+)"$/\1/')
+        if [ -z "$url" ]; then
+          echo "Couldn't find a Yaak AppImage URL on GitHub releases" >&2
+          exit 1
+        fi
+        rm -f "$target_dir"/*.AppImage
+        curl -fL -o "$target_dir/$(basename "$url")" "$url"
+        chmod +x "$target_dir"/*.AppImage
+        ln -sf "$target_dir/$(basename "$url")" "$HOME/.local/bin/yaak"
+      version_hint: latest
+    rpm:
+      type: dnf
+      summary: Latest .rpm from GitHub releases (Fedora-family).
+      run: |
+        tmp=$(mktemp -d)
+        url=$(curl -s https://api.github.com/repos/mountain-loop/yaak/releases/latest \
+              | grep -oE '"browser_download_url": "[^"]+\.x86_64\.rpm"' \
+              | head -n 1 \
+              | sed -E 's/.*"(http[^"]+)"$/\1/')
+        if [ -z "$url" ]; then
+          echo "Couldn't find a Yaak .rpm URL on GitHub releases" >&2
+          exit 1
+        fi
+        curl -fL -o "$tmp/yaak.rpm" "$url"
+        sudo dnf install -y "$tmp/yaak.rpm"
+        rm -rf "$tmp"
+      version_hint: latest
+      requires_sudo: true
+    deb:
+      type: apt
+      summary: Latest .deb from GitHub releases (Debian/Ubuntu).
+      run: |
+        tmp=$(mktemp -d)
+        url=$(curl -s https://api.github.com/repos/mountain-loop/yaak/releases/latest \
+              | grep -oE '"browser_download_url": "[^"]+_amd64\.deb"' \
+              | head -n 1 \
+              | sed -E 's/.*"(http[^"]+)"$/\1/')
+        if [ -z "$url" ]; then
+          echo "Couldn't find a Yaak .deb URL on GitHub releases" >&2
+          exit 1
+        fi
+        curl -fL -o "$tmp/yaak.deb" "$url"
+        sudo apt-get install -y "$tmp/yaak.deb"
+        rm -rf "$tmp"
+      version_hint: latest
+      requires_sudo: true
+category: development
+tags: [api-client, http, rest, graphql, gui]
+homepage: https://yaak.app
+provides:
+  binaries: [yaak]
+desktop:
+  name: Yaak
+  exec: yaak %U
+  comment: Desktop API client for REST, GraphQL, gRPC, and WebSockets.
+  icon: yaak
+  categories: [Development, Network]
+  startup_wm_class: Yaak

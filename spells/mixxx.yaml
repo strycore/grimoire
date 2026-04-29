@@ -1,0 +1,37 @@
+name: mixxx
+summary: Free DJ software for live mixing.
+verify: command -v mixxx || flatpak info org.mixxx.Mixxx >/dev/null 2>&1
+version_check: |
+  mixxx --version 2>/dev/null | awk '{print $2}' | head -n 1 \
+    || flatpak info org.mixxx.Mixxx 2>/dev/null | awk '/^ *Version:/ {print $2; exit}'
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — sandboxed, auto-updates).
+      run: flatpak install -y --user flathub org.mixxx.Mixxx
+      version_hint: latest
+    dnf:
+      type: dnf
+      summary: Fedora package.
+      run: sudo dnf install -y mixxx
+      version_hint: distro
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Debian/Ubuntu package.
+      run: sudo apt-get install -y mixxx
+      version_hint: distro
+      requires_sudo: true
+    pacman:
+      type: pacman
+      summary: Arch extra repo.
+      run: sudo pacman -S --needed --noconfirm mixxx
+      version_hint: distro
+      requires_sudo: true
+category: audio
+tags: [dj, audio, music, gui]
+homepage: https://mixxx.org
+provides:
+  binaries: [mixxx]

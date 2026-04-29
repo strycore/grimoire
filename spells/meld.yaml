@@ -1,0 +1,37 @@
+name: meld
+summary: Visual diff and merge tool.
+verify: command -v meld || flatpak info org.gnome.meld >/dev/null 2>&1
+version_check: |
+  meld --version 2>/dev/null | awk '{print $2}' \
+    || flatpak info org.gnome.meld 2>/dev/null | awk '/^ *Version:/ {print $2; exit}'
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — sandboxed, auto-updates).
+      run: flatpak install -y --user flathub org.gnome.meld
+      version_hint: latest
+    dnf:
+      type: dnf
+      summary: Fedora package.
+      run: sudo dnf install -y meld
+      version_hint: distro
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Debian/Ubuntu package.
+      run: sudo apt-get install -y meld
+      version_hint: distro
+      requires_sudo: true
+    pacman:
+      type: pacman
+      summary: Arch extra repo.
+      run: sudo pacman -S --needed --noconfirm meld
+      version_hint: distro
+      requires_sudo: true
+category: development
+tags: [diff, merge, vcs, gui]
+homepage: https://meldmerge.org
+provides:
+  binaries: [meld]

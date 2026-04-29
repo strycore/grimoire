@@ -1,0 +1,18 @@
+name: vacuumtube
+summary: Native YouTube TV client (uses YouTube's TV interface).
+requires: [flathub]
+verify: flatpak info rocks.shy.VacuumTube >/dev/null 2>&1
+version_check: |
+  flatpak info rocks.shy.VacuumTube 2>/dev/null \
+    | awk '/^ *Version:/ {print $2; exit}'
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended).
+      run: flatpak install -y --user flathub rocks.shy.VacuumTube
+      version_hint: latest
+category: multimedia
+tags: [video, youtube, tv, gui]
+homepage: https://github.com/shyfridge/vacuumtube

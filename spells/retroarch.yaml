@@ -1,0 +1,37 @@
+name: retroarch
+summary: Frontend for emulators, game engines, and media players (libretro).
+verify: command -v retroarch || flatpak info org.libretro.RetroArch >/dev/null 2>&1
+version_check: |
+  retroarch --version 2>/dev/null | awk '/RetroArch/ {print $2; exit}' \
+    || flatpak info org.libretro.RetroArch 2>/dev/null | awk '/^ *Version:/ {print $2; exit}'
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — bundles all cores, sandboxed).
+      run: flatpak install -y --user flathub org.libretro.RetroArch
+      version_hint: latest
+    dnf:
+      type: dnf
+      summary: Fedora package.
+      run: sudo dnf install -y retroarch
+      version_hint: distro
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Debian/Ubuntu package.
+      run: sudo apt-get install -y retroarch
+      version_hint: distro
+      requires_sudo: true
+    pacman:
+      type: pacman
+      summary: Arch extra repo.
+      run: sudo pacman -S --needed --noconfirm retroarch
+      version_hint: distro
+      requires_sudo: true
+category: gaming
+tags: [emulator, libretro, retro, gaming]
+homepage: https://www.retroarch.com
+provides:
+  binaries: [retroarch]

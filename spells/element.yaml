@@ -1,0 +1,34 @@
+name: element
+summary: Element — Matrix chat client.
+requires: [flathub]
+verify: flatpak info im.riot.Riot >/dev/null 2>&1 || command -v element-desktop
+version_check: |
+  flatpak info im.riot.Riot 2>/dev/null \
+    | awk '/^ *Version:/ {print $2; exit}' \
+    || element-desktop --version 2>/dev/null
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — sandboxed, auto-updates).
+      run: flatpak install -y --user flathub im.riot.Riot
+      version_hint: latest
+    apt:
+      type: apt
+      summary: Element's official APT repo (Debian/Ubuntu).
+      run: |
+        sudo install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://packages.element.io/debian/element-io-archive-keyring.gpg \
+          | sudo tee /etc/apt/keyrings/element-io-archive-keyring.gpg >/dev/null
+        echo "deb [signed-by=/etc/apt/keyrings/element-io-archive-keyring.gpg] https://packages.element.io/debian/ default main" \
+          | sudo tee /etc/apt/sources.list.d/element-io.list >/dev/null
+        sudo apt-get update
+        sudo apt-get install -y element-desktop
+      version_hint: latest
+      requires_sudo: true
+category: communication
+tags: [chat, messenger, matrix]
+homepage: https://element.io
+provides:
+  binaries: [element-desktop]

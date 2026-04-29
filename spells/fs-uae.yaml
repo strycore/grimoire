@@ -1,0 +1,31 @@
+name: fs-uae
+summary: Cross-platform Amiga emulator.
+verify: command -v fs-uae || flatpak info net.fsuae.FS-UAE >/dev/null 2>&1
+version_check: |
+  fs-uae --version 2>/dev/null | awk '{print $NF}' | head -n 1 \
+    || flatpak info net.fsuae.FS-UAE 2>/dev/null | awk '/^ *Version:/ {print $2; exit}'
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — sandboxed, auto-updates).
+      run: flatpak install -y --user flathub net.fsuae.FS-UAE
+      version_hint: latest
+    dnf:
+      type: dnf
+      summary: Fedora package.
+      run: sudo dnf install -y fs-uae
+      version_hint: distro
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Debian/Ubuntu package.
+      run: sudo apt-get install -y fs-uae
+      version_hint: distro
+      requires_sudo: true
+category: gaming
+tags: [emulator, amiga, retro]
+homepage: https://fs-uae.net
+provides:
+  binaries: [fs-uae]

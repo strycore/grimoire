@@ -1,0 +1,21 @@
+name: jellyfin-media-player
+summary: Cross-platform desktop client for Jellyfin media servers.
+requires: [flathub]
+verify: flatpak info com.github.iwalton3.jellyfin-media-player >/dev/null 2>&1 || command -v jellyfinmediaplayer
+version_check: |
+  flatpak info com.github.iwalton3.jellyfin-media-player 2>/dev/null \
+    | awk '/^ *Version:/ {print $2; exit}' \
+    || jellyfinmediaplayer --version 2>/dev/null
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — sandboxed, auto-updates).
+      run: flatpak install -y --user flathub com.github.iwalton3.jellyfin-media-player
+      version_hint: latest
+category: multimedia
+tags: [media, video, jellyfin, client, gui]
+homepage: https://github.com/jellyfin/jellyfin-media-player
+provides:
+  binaries: [jellyfinmediaplayer]

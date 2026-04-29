@@ -1,0 +1,21 @@
+name: kdiskmark
+summary: Disk benchmark tool (CrystalDiskMark-like) for Linux.
+requires: [flathub]
+verify: flatpak info io.github.jonmagon.kdiskmark >/dev/null 2>&1 || command -v kdiskmark
+version_check: |
+  flatpak info io.github.jonmagon.kdiskmark 2>/dev/null \
+    | awk '/^ *Version:/ {print $2; exit}' \
+    || kdiskmark --version 2>/dev/null
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — sandboxed).
+      run: flatpak install -y --user flathub io.github.jonmagon.kdiskmark
+      version_hint: latest
+category: benchmark
+tags: [disk, benchmark, performance, gui]
+homepage: https://github.com/JonMagon/KDiskMark
+provides:
+  binaries: [kdiskmark]

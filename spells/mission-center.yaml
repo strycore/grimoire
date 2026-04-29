@@ -1,0 +1,18 @@
+name: mission-center
+summary: Modern GUI system monitor (CPU, GPU, memory, disk, network).
+requires: [flathub]
+verify: flatpak info io.missioncenter.MissionCenter >/dev/null 2>&1
+version_check: |
+  flatpak info io.missioncenter.MissionCenter 2>/dev/null \
+    | awk '/^ *Version:/ {print $2; exit}'
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended).
+      run: flatpak install -y --user flathub io.missioncenter.MissionCenter
+      version_hint: latest
+category: utilities
+tags: [system-monitor, performance, gui]
+homepage: https://missioncenter.io

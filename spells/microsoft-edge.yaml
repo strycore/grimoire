@@ -1,0 +1,43 @@
+name: microsoft-edge
+summary: Microsoft Edge web browser.
+verify: command -v microsoft-edge-stable || command -v microsoft-edge || flatpak info com.microsoft.Edge >/dev/null 2>&1
+version_check: |
+  microsoft-edge-stable --version 2>/dev/null | awk '{print $NF}' \
+    || flatpak info com.microsoft.Edge 2>/dev/null | awk '/^ *Version:/ {print $2; exit}'
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — sandboxed, auto-updates).
+      run: flatpak install -y --user flathub com.microsoft.Edge
+      version_hint: latest
+    dnf:
+      type: dnf
+      summary: Microsoft's official RPM repository.
+      run: |
+        sudo rpm --import https://packages.microsoft.com/keys/microsoft.asc
+        sudo dnf config-manager addrepo --overwrite \
+          --from-repofile=https://packages.microsoft.com/yumrepos/edge/config.repo
+        sudo dnf install -y microsoft-edge-stable
+      version_hint: latest
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Microsoft's official APT repository (Debian/Ubuntu).
+      run: |
+        sudo install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://packages.microsoft.com/keys/microsoft.asc \
+          | gpg --dearmor \
+          | sudo tee /etc/apt/keyrings/microsoft.gpg >/dev/null
+        echo "deb [arch=amd64 signed-by=/etc/apt/keyrings/microsoft.gpg] https://packages.microsoft.com/repos/edge stable main" \
+          | sudo tee /etc/apt/sources.list.d/microsoft-edge.list >/dev/null
+        sudo apt-get update
+        sudo apt-get install -y microsoft-edge-stable
+      version_hint: latest
+      requires_sudo: true
+category: internet
+tags: [browser, web, microsoft]
+homepage: https://www.microsoft.com/edge
+provides:
+  binaries: [microsoft-edge-stable, microsoft-edge]

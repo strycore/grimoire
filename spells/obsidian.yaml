@@ -1,0 +1,21 @@
+name: obsidian
+summary: Markdown-based knowledge base / note-taking app.
+requires: [flathub]
+verify: flatpak info md.obsidian.Obsidian >/dev/null 2>&1 || command -v obsidian
+version_check: |
+  flatpak info md.obsidian.Obsidian 2>/dev/null \
+    | awk '/^ *Version:/ {print $2; exit}' \
+    || obsidian --version 2>/dev/null
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — sandboxed, auto-updates).
+      run: flatpak install -y --user flathub md.obsidian.Obsidian
+      version_hint: latest
+category: productivity
+tags: [notes, markdown, knowledge-base, gui]
+homepage: https://obsidian.md
+provides:
+  binaries: [obsidian]

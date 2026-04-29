@@ -1,0 +1,18 @@
+name: flatseal
+summary: GUI to manage Flatpak app permissions.
+requires: [flathub]
+verify: flatpak info com.github.tchx84.Flatseal >/dev/null 2>&1
+version_check: |
+  flatpak info com.github.tchx84.Flatseal 2>/dev/null \
+    | awk '/^ *Version:/ {print $2; exit}'
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended).
+      run: flatpak install -y --user flathub com.github.tchx84.Flatseal
+      version_hint: latest
+category: utilities
+tags: [flatpak, permissions, security, gui]
+homepage: https://github.com/tchx84/Flatseal

@@ -1,0 +1,21 @@
+name: protonvpn
+summary: Proton VPN desktop client (privacy-focused VPN).
+requires: [flathub]
+verify: flatpak info com.protonvpn.www >/dev/null 2>&1 || command -v protonvpn-app
+version_check: |
+  flatpak info com.protonvpn.www 2>/dev/null \
+    | awk '/^ *Version:/ {print $2; exit}' \
+    || protonvpn-app --version 2>/dev/null
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — sandboxed, auto-updates).
+      run: flatpak install -y --user flathub com.protonvpn.www
+      version_hint: latest
+category: network
+tags: [vpn, privacy, proton, gui]
+homepage: https://protonvpn.com
+provides:
+  binaries: [protonvpn-app]

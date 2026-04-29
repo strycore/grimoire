@@ -1,0 +1,31 @@
+name: ardour
+summary: Professional digital audio workstation (DAW).
+verify: command -v ardour || command -v ardour8 || flatpak info org.ardour.Ardour >/dev/null 2>&1
+version_check: |
+  flatpak info org.ardour.Ardour 2>/dev/null | awk '/^ *Version:/ {print $2; exit}' \
+    || ardour --version 2>/dev/null | awk '{print $NF}' | head -n 1
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — current upstream version).
+      run: flatpak install -y --user flathub org.ardour.Ardour
+      version_hint: latest
+    dnf:
+      type: dnf
+      summary: Fedora package (may lag upstream).
+      run: sudo dnf install -y ardour
+      version_hint: distro
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Debian/Ubuntu package (may lag upstream).
+      run: sudo apt-get install -y ardour
+      version_hint: distro
+      requires_sudo: true
+category: audio
+tags: [daw, audio, music, recording, gui]
+homepage: https://ardour.org
+provides:
+  binaries: [ardour]

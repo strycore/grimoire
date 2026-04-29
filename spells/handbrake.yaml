@@ -1,0 +1,37 @@
+name: handbrake
+summary: Video transcoder for converting video to common formats.
+verify: command -v ghb || command -v HandBrake || flatpak info fr.handbrake.ghb >/dev/null 2>&1
+version_check: |
+  ghb --version 2>/dev/null | awk '{print $NF}' | head -n 1 \
+    || flatpak info fr.handbrake.ghb 2>/dev/null | awk '/^ *Version:/ {print $2; exit}'
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — sandboxed, auto-updates).
+      run: flatpak install -y --user flathub fr.handbrake.ghb
+      version_hint: latest
+    dnf:
+      type: dnf
+      summary: Fedora package (RPM Fusion or rpmsphere may be required).
+      run: sudo dnf install -y HandBrake-gui HandBrake-cli
+      version_hint: distro
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Debian/Ubuntu package.
+      run: sudo apt-get install -y handbrake handbrake-cli
+      version_hint: distro
+      requires_sudo: true
+    pacman:
+      type: pacman
+      summary: Arch extra repo.
+      run: sudo pacman -S --needed --noconfirm handbrake handbrake-cli
+      version_hint: distro
+      requires_sudo: true
+category: multimedia
+tags: [video, transcode, encoder, gui]
+homepage: https://handbrake.fr
+provides:
+  binaries: [ghb, HandBrakeCLI]

@@ -1,0 +1,21 @@
+name: upscayl
+summary: AI image upscaler (free, open source).
+requires: [flathub]
+verify: flatpak info org.upscayl.Upscayl >/dev/null 2>&1 || command -v upscayl
+version_check: |
+  flatpak info org.upscayl.Upscayl 2>/dev/null \
+    | awk '/^ *Version:/ {print $2; exit}' \
+    || upscayl --version 2>/dev/null
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — sandboxed, auto-updates).
+      run: flatpak install -y --user flathub org.upscayl.Upscayl
+      version_hint: latest
+category: ai
+tags: [image, upscaler, ai, gui]
+homepage: https://upscayl.org
+provides:
+  binaries: [upscayl]

@@ -1,0 +1,21 @@
+name: joplin
+summary: Open-source note-taking and to-do app with sync.
+requires: [flathub]
+verify: flatpak info net.cozic.joplin_desktop >/dev/null 2>&1 || command -v joplin-desktop
+version_check: |
+  flatpak info net.cozic.joplin_desktop 2>/dev/null \
+    | awk '/^ *Version:/ {print $2; exit}' \
+    || joplin-desktop --version 2>/dev/null
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — sandboxed, auto-updates).
+      run: flatpak install -y --user flathub net.cozic.joplin_desktop
+      version_hint: latest
+category: productivity
+tags: [notes, markdown, todo, gui]
+homepage: https://joplinapp.org
+provides:
+  binaries: [joplin-desktop]

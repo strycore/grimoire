@@ -1,0 +1,21 @@
+name: protonup-qt
+summary: Install and manage Proton-GE / Wine-GE for Steam and Lutris.
+requires: [flathub]
+verify: flatpak info net.davidotek.pupgui2 >/dev/null 2>&1 || command -v protonup-qt
+version_check: |
+  flatpak info net.davidotek.pupgui2 2>/dev/null \
+    | awk '/^ *Version:/ {print $2; exit}' \
+    || protonup-qt --version 2>/dev/null
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — sandboxed, auto-updates).
+      run: flatpak install -y --user flathub net.davidotek.pupgui2
+      version_hint: latest
+category: gaming
+tags: [gaming, proton, steam, lutris, wine, gui]
+homepage: https://davidotek.github.io/protonup-qt
+provides:
+  binaries: [protonup-qt]

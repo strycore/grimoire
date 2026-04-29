@@ -1,0 +1,37 @@
+name: krita
+summary: Professional digital painting application (KDE).
+verify: command -v krita || flatpak info org.kde.krita >/dev/null 2>&1
+version_check: |
+  krita --version 2>/dev/null | awk '{print $2}' | head -n 1 \
+    || flatpak info org.kde.krita 2>/dev/null | awk '/^ *Version:/ {print $2; exit}'
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — current upstream version, sandboxed).
+      run: flatpak install -y --user flathub org.kde.krita
+      version_hint: latest
+    dnf:
+      type: dnf
+      summary: Fedora package.
+      run: sudo dnf install -y krita
+      version_hint: distro
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Debian/Ubuntu package.
+      run: sudo apt-get install -y krita
+      version_hint: distro
+      requires_sudo: true
+    pacman:
+      type: pacman
+      summary: Arch extra repo.
+      run: sudo pacman -S --needed --noconfirm krita
+      version_hint: distro
+      requires_sudo: true
+category: graphics
+tags: [art, painting, drawing, gui, kde]
+homepage: https://krita.org
+provides:
+  binaries: [krita]

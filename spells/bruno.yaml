@@ -1,0 +1,73 @@
+name: bruno
+summary: Git-friendly desktop API client (Postman/Insomnia alternative).
+verify: command -v bruno
+version_check: bruno --version 2>/dev/null
+cast:
+  default: appimage
+  channels:
+    appimage:
+      type: shell
+      summary: Latest AppImage from GitHub releases into $SOFTWARE_DIR/Bruno.
+      run: |
+        software="${SOFTWARE_DIR:-$HOME/Software}"
+        target_dir="$software/Bruno"
+        mkdir -p "$target_dir" "$HOME/.local/bin"
+        url=$(curl -s https://api.github.com/repos/usebruno/bruno/releases/latest \
+              | grep -oE '"browser_download_url": "[^"]+_x86_64_linux\.AppImage"' \
+              | head -n 1 \
+              | sed -E 's/.*"(http[^"]+)"$/\1/')
+        if [ -z "$url" ]; then
+          echo "Couldn't find a Bruno AppImage URL on GitHub releases" >&2
+          exit 1
+        fi
+        rm -f "$target_dir"/*.AppImage
+        curl -fL -o "$target_dir/$(basename "$url")" "$url"
+        chmod +x "$target_dir"/*.AppImage
+        ln -sf "$target_dir/$(basename "$url")" "$HOME/.local/bin/bruno"
+      version_hint: latest
+    rpm:
+      type: dnf
+      summary: Latest .rpm from GitHub releases (Fedora-family).
+      run: |
+        tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+        url=$(curl -s https://api.github.com/repos/usebruno/bruno/releases/latest \
+              | grep -oE '"browser_download_url": "[^"]+_x86_64_linux\.rpm"' \
+              | head -n 1 \
+              | sed -E 's/.*"(http[^"]+)"$/\1/')
+        if [ -z "$url" ]; then
+          echo "Couldn't find a Bruno .rpm URL on GitHub releases" >&2
+          exit 1
+        fi
+        curl -fL -o "$tmp/bruno.rpm" "$url"
+        sudo dnf install -y "$tmp/bruno.rpm"
+      version_hint: latest
+      requires_sudo: true
+    deb:
+      type: apt
+      summary: Latest .deb from GitHub releases (Debian/Ubuntu).
+      run: |
+        tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+        url=$(curl -s https://api.github.com/repos/usebruno/bruno/releases/latest \
+              | grep -oE '"browser_download_url": "[^"]+_amd64_linux\.deb"' \
+              | head -n 1 \
+              | sed -E 's/.*"(http[^"]+)"$/\1/')
+        if [ -z "$url" ]; then
+          echo "Couldn't find a Bruno .deb URL on GitHub releases" >&2
+          exit 1
+        fi
+        curl -fL -o "$tmp/bruno.deb" "$url"
+        sudo apt-get install -y "$tmp/bruno.deb"
+      version_hint: latest
+      requires_sudo: true
+category: development
+tags: [api-client, http, rest, graphql, gui]
+homepage: https://www.usebruno.com
+provides:
+  binaries: [bruno]
+desktop:
+  name: Bruno
+  exec: bruno %U
+  comment: Git-friendly desktop API client.
+  icon: bruno
+  categories: [Development, Network]
+  startup_wm_class: Bruno

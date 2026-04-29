@@ -1,0 +1,39 @@
+name: dbeaver
+summary: Universal SQL database client (DBeaver Community).
+verify: command -v dbeaver || flatpak info io.dbeaver.DBeaverCommunity >/dev/null 2>&1
+version_check: |
+  dbeaver -version 2>/dev/null | head -n 1 \
+    || flatpak info io.dbeaver.DBeaverCommunity 2>/dev/null | awk '/^ *Version:/ {print $2; exit}'
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Flathub (recommended — sandboxed, auto-updates).
+      run: flatpak install -y --user flathub io.dbeaver.DBeaverCommunity
+      version_hint: latest
+    rpm:
+      type: dnf
+      summary: Latest .rpm from dbeaver.io (Fedora-family).
+      run: |
+        tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+        curl -fL -o "$tmp/dbeaver.rpm" \
+          "https://dbeaver.io/files/dbeaver-ce-latest-stable.x86_64.rpm"
+        sudo dnf install -y "$tmp/dbeaver.rpm"
+      version_hint: latest
+      requires_sudo: true
+    deb:
+      type: apt
+      summary: Latest .deb from dbeaver.io (Debian/Ubuntu).
+      run: |
+        tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+        curl -fL -o "$tmp/dbeaver.deb" \
+          "https://dbeaver.io/files/dbeaver-ce_latest_amd64.deb"
+        sudo apt-get install -y "$tmp/dbeaver.deb"
+      version_hint: latest
+      requires_sudo: true
+category: development
+tags: [database, sql, client, gui]
+homepage: https://dbeaver.io
+provides:
+  binaries: [dbeaver]

@@ -1,0 +1,24 @@
+name: cursor
+summary: AI-first code editor (VS Code fork).
+verify: command -v cursor
+version_check: cursor --version 2>/dev/null | head -n 1
+cast:
+  default: upstream
+  channels:
+    upstream:
+      type: shell
+      summary: Official cursor.com installer.
+      run: curl -fsSL https://cursor.com/install | bash
+      version_hint: latest
+category: development
+tags: [editor, ide, ai, gui]
+homepage: https://cursor.com
+provides:
+  binaries: [cursor]
+desktop:
+  name: Cursor
+  exec: cursor %F
+  comment: AI-first code editor.
+  icon: cursor
+  categories: [Development, IDE, TextEditor]
+  startup_wm_class: Cursor

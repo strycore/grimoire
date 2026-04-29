@@ -1,0 +1,42 @@
+name: minecraft
+summary: Official Minecraft Java/Bedrock launcher (from minecraft.net).
+verify: command -v minecraft-launcher
+version_check: minecraft-launcher --version 2>/dev/null
+cast:
+  default: tarball
+  channels:
+    tarball:
+      type: shell
+      summary: Official tarball into $SOFTWARE_DIR/Minecraft (no sudo).
+      run: |
+        software="${SOFTWARE_DIR:-$HOME/Software}"
+        target_dir="$software/Minecraft"
+        mkdir -p "$target_dir" "$HOME/.local/bin"
+        tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+        curl -fL -o "$tmp/Minecraft.tar.gz" \
+          "https://launcher.mojang.com/download/Minecraft.tar.gz"
+        tar -xzf "$tmp/Minecraft.tar.gz" -C "$target_dir" --strip-components=1
+        ln -sf "$target_dir/minecraft-launcher" "$HOME/.local/bin/minecraft-launcher"
+      version_hint: latest
+    deb:
+      type: apt
+      summary: Official .deb from launcher.mojang.com (Debian/Ubuntu).
+      run: |
+        tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+        curl -fL -o "$tmp/Minecraft.deb" \
+          "https://launcher.mojang.com/download/Minecraft.deb"
+        sudo apt-get install -y "$tmp/Minecraft.deb"
+      version_hint: latest
+      requires_sudo: true
+category: gaming
+tags: [gaming, minecraft, mojang, launcher]
+homepage: https://www.minecraft.net
+provides:
+  binaries: [minecraft-launcher]
+desktop:
+  name: Minecraft Launcher
+  exec: minecraft-launcher
+  comment: Official Minecraft launcher.
+  icon: minecraft
+  categories: [Game]
+  startup_wm_class: Minecraft Launcher

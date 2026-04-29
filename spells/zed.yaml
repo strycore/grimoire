@@ -1,0 +1,24 @@
+name: zed
+summary: High-performance, multiplayer code editor (Rust).
+verify: command -v zed
+version_check: zed --version 2>/dev/null | awk '{print $2}'
+cast:
+  default: upstream
+  channels:
+    upstream:
+      type: shell
+      summary: Official zed.dev installer (into ~/.local).
+      run: curl -f https://zed.dev/install.sh | sh
+      version_hint: latest
+category: development
+tags: [editor, ide, rust, gui]
+homepage: https://zed.dev
+provides:
+  binaries: [zed]
+desktop:
+  name: Zed
+  exec: zed %F
+  comment: High-performance code editor.
+  icon: zed
+  categories: [Development, IDE, TextEditor]
+  startup_wm_class: dev.zed.Zed

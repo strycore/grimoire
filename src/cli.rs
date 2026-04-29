@@ -72,8 +72,8 @@ pub struct ScryArgs {
 
 #[derive(clap::Args)]
 pub struct CastArgs {
-    /// Spell to cast. Omit to cast everything declared by the active manifest.
-    pub spell: Option<String>,
+    /// Spells to cast. Omit to cast everything declared by the active manifest.
+    pub spells: Vec<String>,
     /// Override which channel to use (must exist on the spell).
     /// Only valid with a single named spell.
     #[arg(long)]
@@ -272,31 +272,40 @@ fn cast_cmd(args: CastArgs) -> Result<()> {
     let log = CastLog::open().ok();
 
     // Build seed requirements + per-spell channel overrides.
-    let (seeds, channel_overrides) = if let Some(name) = &args.spell {
-        let seed = Requirement {
-            name: name.clone(),
-            constraints: Vec::new(),
-        };
-        let mut overrides: HashMap<String, String> = HashMap::new();
-        if let Some(via) = &args.via {
-            overrides.insert(name.clone(), via.clone());
+    let (seeds, channel_overrides) = match args.spells.as_slice() {
+        [] => {
+            if args.via.is_some() {
+                bail!("--via requires a single spell name");
+            }
+            let discovered = resolve_manifest(args.manifest.as_deref(), true)?
+                .expect("resolve_manifest returns Some when require=true or errors");
+            announce_manifest(&discovered);
+            let seeds = discovered.manifest.requirements(args.profile.as_deref())?;
+            let overrides: HashMap<String, String> = discovered
+                .manifest
+                .overrides
+                .iter()
+                .filter_map(|(k, v)| v.channel.clone().map(|c| (k.clone(), c)))
+                .collect();
+            (seeds, overrides)
         }
-        (vec![seed], overrides)
-    } else {
-        if args.via.is_some() {
-            bail!("--via requires a single spell name");
+        names => {
+            if args.via.is_some() && names.len() > 1 {
+                bail!("--via requires a single spell name");
+            }
+            let seeds: Vec<Requirement> = names
+                .iter()
+                .map(|n| Requirement {
+                    name: n.clone(),
+                    constraints: Vec::new(),
+                })
+                .collect();
+            let mut overrides: HashMap<String, String> = HashMap::new();
+            if let (Some(via), [only]) = (&args.via, names) {
+                overrides.insert(only.clone(), via.clone());
+            }
+            (seeds, overrides)
         }
-        let discovered = resolve_manifest(args.manifest.as_deref(), true)?
-            .expect("resolve_manifest returns Some when require=true or errors");
-        announce_manifest(&discovered);
-        let seeds = discovered.manifest.requirements(args.profile.as_deref())?;
-        let overrides: HashMap<String, String> = discovered
-            .manifest
-            .overrides
-            .iter()
-            .filter_map(|(k, v)| v.channel.clone().map(|c| (k.clone(), c)))
-            .collect();
-        (seeds, overrides)
     };
 
     // Resolve: expand transitively, topo sort, detect cycles, merge constraints.

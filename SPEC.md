@@ -429,7 +429,7 @@ DEVELOPMENT_DIR = "/home/me/dev"
 | Embedded + personal spell merge with override | ✅ |
 | `grimoire ls` | ✅ |
 | `grimoire show` | ✅ |
-| `grimoire cast <spell>` (single, with `--via`, `--dry-run`, `--recast`) | ✅ |
+| `grimoire cast <spell> [<spell> ...]` (single or multi, with `--via` for single, `--dry-run`, `--recast`) | ✅ |
 | `grimoire scry [<spell>]` (single + all-spells; missing/cast/drifted) | ✅ |
 | `cast.db` SQLite event log + drift detection | ✅ |
 | Manifest discovery (`.grimoire.toml` walk-up + user manifest fallback) | ✅ |

@@ -1,0 +1,17 @@
+name: mise
+summary: Polyglot version manager (formerly rtx) — replaces asdf, nvm, pyenv, etc.
+verify: command -v mise
+version_check: mise --version 2>/dev/null | awk '{print $1}'
+cast:
+  default: upstream
+  channels:
+    upstream:
+      type: shell
+      summary: Official mise.run installer.
+      run: curl -fsSL https://mise.run | sh
+      version_hint: latest
+category: development
+tags: [version-manager, dev-tools, cli]
+homepage: https://mise.jdx.dev
+provides:
+  binaries: [mise]

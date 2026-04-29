@@ -1,0 +1,22 @@
+name: pnpm
+summary: Fast, disk-efficient npm replacement.
+verify: command -v pnpm
+version_check: pnpm --version 2>/dev/null
+cast:
+  default: upstream
+  channels:
+    upstream:
+      type: shell
+      summary: Official get.pnpm.io installer (no Node required).
+      run: curl -fsSL https://get.pnpm.io/install.sh | sh -
+      version_hint: latest
+    npm:
+      type: npm
+      summary: Install via npm if Node is already managed.
+      run: npm install -g pnpm
+      version_hint: latest
+category: development
+tags: [package-manager, javascript, node, cli]
+homepage: https://pnpm.io
+provides:
+  binaries: [pnpm, pnpx]

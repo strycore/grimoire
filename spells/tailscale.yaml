@@ -1,0 +1,18 @@
+name: tailscale
+summary: Zero-config mesh VPN (WireGuard-based).
+verify: command -v tailscale
+version_check: tailscale --version 2>/dev/null | head -n 1
+cast:
+  default: upstream
+  channels:
+    upstream:
+      type: shell
+      summary: Official installer (sets up systemd service for tailscaled).
+      run: curl -fsSL https://tailscale.com/install.sh | sh
+      version_hint: latest
+      requires_sudo: true
+category: network
+tags: [vpn, networking, mesh, wireguard, cli]
+homepage: https://tailscale.com
+provides:
+  binaries: [tailscale, tailscaled]

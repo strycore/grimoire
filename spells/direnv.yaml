@@ -1,0 +1,37 @@
+name: direnv
+summary: Per-directory environment variables — auto-loads .envrc on cd.
+verify: command -v direnv
+version_check: direnv --version 2>/dev/null
+cast:
+  default: user
+  channels:
+    user:
+      type: shell
+      summary: Official installer into ~/.local/bin (no sudo).
+      run: |
+        mkdir -p "$HOME/.local/bin"
+        curl -sfL https://direnv.net/install.sh | bin_path="$HOME/.local/bin" bash
+      version_hint: latest
+    dnf:
+      type: dnf
+      summary: Fedora package.
+      run: sudo dnf install -y direnv
+      version_hint: distro
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Debian/Ubuntu package.
+      run: sudo apt-get install -y direnv
+      version_hint: distro
+      requires_sudo: true
+    pacman:
+      type: pacman
+      summary: Arch community repo.
+      run: sudo pacman -S --needed --noconfirm direnv
+      version_hint: distro
+      requires_sudo: true
+category: development
+tags: [env, shell, dev-tools, cli]
+homepage: https://direnv.net
+provides:
+  binaries: [direnv]

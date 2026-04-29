@@ -1,0 +1,36 @@
+name: helm
+summary: Kubernetes package manager.
+verify: command -v helm
+version_check: helm version --short 2>/dev/null | sed 's/^v//' | awk -F'+' '{print $1}'
+cast:
+  default: user
+  channels:
+    user:
+      type: shell
+      summary: Official get-helm-3 script into ~/.local/bin (no sudo).
+      run: |
+        mkdir -p "$HOME/.local/bin"
+        tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+        curl -fsSL -o "$tmp/get-helm-3" \
+          https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+        chmod 0700 "$tmp/get-helm-3"
+        HELM_INSTALL_DIR="$HOME/.local/bin" USE_SUDO=false bash "$tmp/get-helm-3"
+      version_hint: latest
+    apt:
+      type: apt
+      summary: Official baltocdn APT repo (Debian/Ubuntu).
+      run: |
+        sudo install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://baltocdn.com/helm/signing.asc \
+          | sudo gpg --dearmor -o /etc/apt/keyrings/helm.gpg
+        echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/helm.gpg] https://baltocdn.com/helm/stable/debian/ all main" \
+          | sudo tee /etc/apt/sources.list.d/helm-stable-debian.list >/dev/null
+        sudo apt-get update
+        sudo apt-get install -y helm
+      version_hint: latest
+      requires_sudo: true
+category: development
+tags: [kubernetes, k8s, package-manager, devops, cli]
+homepage: https://helm.sh
+provides:
+  binaries: [helm]

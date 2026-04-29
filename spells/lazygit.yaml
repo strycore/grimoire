@@ -1,0 +1,36 @@
+name: lazygit
+summary: Terminal UI for git.
+verify: command -v lazygit
+version_check: lazygit --version 2>/dev/null | grep -oE 'version=[^,]+' | sed 's/version=//'
+cast:
+  default: user
+  channels:
+    user:
+      type: shell
+      summary: Latest GitHub release tarball into ~/.local/bin (no sudo).
+      run: |
+        mkdir -p "$HOME/.local/bin"
+        tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+        url=$(curl -s https://api.github.com/repos/jesseduffield/lazygit/releases/latest \
+              | grep -oE '"browser_download_url": "[^"]+linux_x86_64\.tar\.gz"' \
+              | head -n 1 \
+              | sed -E 's/.*"(http[^"]+)"$/\1/')
+        if [ -z "$url" ]; then
+          echo "Couldn't find a lazygit linux_x86_64 tarball URL on GitHub releases" >&2
+          exit 1
+        fi
+        curl -fL -o "$tmp/lazygit.tar.gz" "$url"
+        tar -xzf "$tmp/lazygit.tar.gz" -C "$tmp" lazygit
+        install -m 0755 "$tmp/lazygit" "$HOME/.local/bin/lazygit"
+      version_hint: latest
+    dnf:
+      type: dnf
+      summary: Fedora COPR (atim/lazygit) — see lazygit docs to enable.
+      run: sudo dnf install -y lazygit
+      version_hint: distro
+      requires_sudo: true
+category: development
+tags: [git, vcs, tui, cli]
+homepage: https://github.com/jesseduffield/lazygit
+provides:
+  binaries: [lazygit]

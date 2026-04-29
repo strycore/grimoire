@@ -1,0 +1,50 @@
+name: kubectl
+summary: Kubernetes command-line tool.
+verify: command -v kubectl
+version_check: kubectl version --client --output=json 2>/dev/null | grep -oE '"gitVersion":\s*"v[^"]+' | head -n 1 | sed 's/.*"v//'
+cast:
+  default: user
+  channels:
+    user:
+      type: shell
+      summary: Latest stable release into ~/.local/bin (no sudo).
+      run: |
+        mkdir -p "$HOME/.local/bin"
+        version=$(curl -fsSL https://dl.k8s.io/release/stable.txt)
+        curl -fL -o "$HOME/.local/bin/kubectl" \
+          "https://dl.k8s.io/release/${version}/bin/linux/amd64/kubectl"
+        chmod 0755 "$HOME/.local/bin/kubectl"
+      version_hint: latest
+    dnf:
+      type: dnf
+      summary: Kubernetes official RPM repo (Fedora/RHEL).
+      run: |
+        sudo tee /etc/yum.repos.d/kubernetes.repo >/dev/null <<'EOF'
+        [kubernetes]
+        name=Kubernetes
+        baseurl=https://pkgs.k8s.io/core:/stable:/v1.31/rpm/
+        enabled=1
+        gpgcheck=1
+        gpgkey=https://pkgs.k8s.io/core:/stable:/v1.31/rpm/repodata/repomd.xml.key
+        EOF
+        sudo dnf install -y kubectl
+      version_hint: latest
+      requires_sudo: true
+    apt:
+      type: apt
+      summary: Kubernetes official APT repo (Debian/Ubuntu).
+      run: |
+        sudo install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://pkgs.k8s.io/core:/stable:/v1.31/deb/Release.key \
+          | sudo gpg --dearmor -o /etc/apt/keyrings/kubernetes-apt-keyring.gpg
+        echo "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.gpg] https://pkgs.k8s.io/core:/stable:/v1.31/deb/ /" \
+          | sudo tee /etc/apt/sources.list.d/kubernetes.list >/dev/null
+        sudo apt-get update
+        sudo apt-get install -y kubectl
+      version_hint: latest
+      requires_sudo: true
+category: development
+tags: [kubernetes, k8s, devops, cli]
+homepage: https://kubernetes.io
+provides:
+  binaries: [kubectl]

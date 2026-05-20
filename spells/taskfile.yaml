@@ -1,7 +1,7 @@
 name: taskfile
 summary: Task runner / build tool written in Go (go-task).
-verify: command -v task
-version_check: task --version 2>/dev/null | awk '{print $3}'
+verify: command -v task || command -v go-task
+version_check: (command -v task >/dev/null && task --version || go-task --version) 2>/dev/null | awk '{print $3}'
 cast:
   default: user
   channels:
@@ -14,8 +14,8 @@ cast:
       version_hint: latest
     dnf:
       type: dnf
-      summary: Official Fedora package maintained by the Task team.
-      run: sudo dnf install -y task
+      summary: Official Fedora package (installs as `go-task`).
+      run: sudo dnf install -y go-task
       version_hint: distro
       requires_sudo: true
     apt:
@@ -33,4 +33,4 @@ category: development
 tags: [build-tool, task-runner, cli, go]
 homepage: https://taskfile.dev
 provides:
-  binaries: [task]
+  binaries: [task, go-task]

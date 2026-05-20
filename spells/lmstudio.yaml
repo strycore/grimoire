@@ -17,7 +17,7 @@ cast:
       type: shell
       summary: Pinned GUI AppImage from installers.lmstudio.ai into $SOFTWARE_DIR/LMStudio.
       run: |
-        version="0.4.12-1"
+        version="0.4.13-1"
         software="${SOFTWARE_DIR:-$HOME/Software}"
         target_dir="$software/LMStudio"
         url="https://installers.lmstudio.ai/linux/x64/${version}/LM-Studio-${version}-x64.AppImage"

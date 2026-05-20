@@ -6,16 +6,15 @@ cast:
   channels:
     tarball:
       type: shell
-      summary: Pinned tarball from geeks3d.com (override $FURMARK_URL if it 404s).
+      summary: Pinned 7z archive from geeks3d.com (override $FURMARK_URL if it 404s).
       run: |
-        version="${FURMARK_VERSION:-2.7.0.0}"
         software="${SOFTWARE_DIR:-$HOME/Software}"
-        url="${FURMARK_URL:-https://www.geeks3d.com/dl/files/furmark2/FurMark_Linux_x64_${version}.tar.gz}"
+        url="${FURMARK_URL:-https://www.geeks3d.com/dl/get/833}"
         mkdir -p "$software"
         tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
         cd "$tmp"
-        curl -fL -o furmark.tar.gz "$url"
-        tar xzf furmark.tar.gz
+        curl -fL -o furmark.7z "$url"
+        7z x -y furmark.7z >/dev/null
         extracted=$(find . -maxdepth 1 -type d -name 'FurMark*' | head -n 1)
         if [ -z "$extracted" ]; then
           echo "FurMark archive layout was unexpected; check $tmp" >&2

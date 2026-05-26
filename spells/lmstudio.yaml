@@ -27,6 +27,30 @@ cast:
         curl -fL -o "$target_dir/LM-Studio-${version}-x64.AppImage" "$url"
         chmod +x "$target_dir/LM-Studio-${version}-x64.AppImage"
         ln -sf "$target_dir/LM-Studio-${version}-x64.AppImage" "$HOME/.local/bin/lmstudio"
+        # The GUI AppImage records its install location as an ephemeral
+        # /tmp/.mount_* FUSE path, which breaks `lms server start` on a cold
+        # boot ("no valid installation could be found"). Install an `lms`
+        # wrapper that re-stamps the install location to the persistent
+        # AppImage before delegating to the real CLI (bootstrapped into
+        # ~/.lmstudio/bin on first GUI launch).
+        cat > "$HOME/.local/bin/lms" <<'LMS_WRAPPER'
+        #!/bin/sh
+        appimage="$(readlink -f "$HOME/.local/bin/lmstudio" 2>/dev/null)"
+        if [ -n "$appimage" ] && [ -x "$appimage" ] && [ -d "$HOME/.lmstudio/.internal" ]; then
+          dir="$(dirname "$appimage")"
+          printf '{"path":"%s","argv":["%s"],"cwd":"%s"}\n' \
+            "$appimage" "$appimage" "$dir" \
+            > "$HOME/.lmstudio/.internal/app-install-location.json"
+        fi
+        real_lms="$HOME/.lmstudio/bin/lms"
+        if [ ! -x "$real_lms" ]; then
+          echo "lms: LM Studio CLI is not bootstrapped yet." >&2
+          echo "Launch the GUI once (run: lmstudio) to install it, then retry." >&2
+          exit 1
+        fi
+        exec "$real_lms" "$@"
+        LMS_WRAPPER
+        chmod +x "$HOME/.local/bin/lms"
       version_hint: pinned
     headless:
       type: shell

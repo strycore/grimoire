@@ -1,0 +1,56 @@
+name: nix
+summary: Nix package manager (reproducible builds, nixpkgs, dev shells).
+# nix lives outside the usual PATH: /nix/var/nix/profiles/default (multi-user)
+# or ~/.nix-profile (single-user). The installer wires it into the shell
+# profile, but check the store directly so verification doesn't depend on
+# which shell the user runs.
+verify: |
+  command -v nix \
+    || test -x /nix/var/nix/profiles/default/bin/nix \
+    || test -x "$HOME/.nix-profile/bin/nix"
+version_check: |
+  nix_bin="$(command -v nix 2>/dev/null || true)"
+  if [ -z "$nix_bin" ]; then
+    for candidate in /nix/var/nix/profiles/default/bin/nix "$HOME/.nix-profile/bin/nix"; do
+      if [ -x "$candidate" ]; then
+        nix_bin="$candidate"
+        break
+      fi
+    done
+  fi
+  if [ -n "$nix_bin" ]; then
+    "$nix_bin" --version 2>/dev/null | awk '{print $NF}'
+  fi
+cast:
+  default: auto
+  channels:
+    auto:
+      type: shell
+      summary: >-
+        Official installer, mode picked by upstream: multi-user on systemd hosts
+        without SELinux enforcing, single-user otherwise (recommended).
+      run: curl -L https://nixos.org/nix/install | sh -s -- --yes
+      version_hint: latest
+      requires_sudo: true
+    multi-user:
+      type: shell
+      summary: >-
+        Official installer, daemon mode: root-owned /nix, nix-daemon systemd
+        unit, nixbld build users. Refuses to run with SELinux enforcing
+        (NixOS/nix#2374).
+      run: curl -L https://nixos.org/nix/install | sh -s -- --daemon --yes
+      version_hint: latest
+      requires_sudo: true
+    single-user:
+      type: shell
+      summary: >-
+        Official installer, no daemon: /nix owned by the invoking user. Works
+        with SELinux enforcing and without systemd.
+      run: curl -L https://nixos.org/nix/install | sh -s -- --no-daemon --yes
+      version_hint: latest
+      requires_sudo: true
+category: development
+tags: [package-manager, reproducible-builds, nixpkgs]
+homepage: https://nixos.org
+provides:
+  binaries: [nix, nix-env, nix-shell, nix-build]

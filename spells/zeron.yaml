@@ -1,0 +1,60 @@
+name: zeron
+summary: Native workspace to run and pilot coding agents (Claude Code, Codex, …) from any device.
+description: |
+  Zeron drives the agent CLIs you already use (Claude Code, Codex, Cursor,
+  OpenCode, Grok, …) from one GPUI window, with live branch diffs and commit
+  history, and lets your other devices pilot the same sessions.
+
+  Both channels install into ~/.zeron/app/<version> behind a `current`
+  symlink, which Zeron's in-app updater then manages.
+# Upstream's install lands in ~/.zeron/app/current and links ~/.local/bin/zeron;
+# check the app dir directly so verify doesn't depend on the user's PATH.
+verify: |
+  command -v zeron || test -x "$HOME/.zeron/app/current/zeron"
+version_check: |
+  zeron_bin="$(command -v zeron 2>/dev/null || echo "$HOME/.zeron/app/current/zeron")"
+  "$zeron_bin" --version 2>/dev/null | awk '{print $2}'
+cast:
+  default: desktop
+  channels:
+    # No `desktop:` block on purpose: the tarball's install.sh writes
+    # ~/.local/share/applications/zeron.desktop itself (with the zeron://
+    # URL handler), which grimoire's generated entry would overwrite.
+    desktop:
+      type: shell
+      summary: >-
+        Latest release tarball (sha256-checked against the release manifest),
+        installed by its bundled install.sh: desktop entry + icon, self-updating
+        (recommended).
+      run: |
+        case "$(uname -m)" in
+          x86_64 | amd64) arch=x86_64 ;;
+          aarch64 | arm64) arch=aarch64 ;;
+          *) echo "zeron: unsupported architecture $(uname -m)" >&2; exit 1 ;;
+        esac
+        base=https://zeron.sh/releases
+        version="$(curl -fsSL "$base/latest.txt" | tr -d '[:space:]')"
+        file="zeron-$version-linux-$arch.tar.gz"
+        tmp="$(mktemp -d)"; trap 'rm -rf "$tmp"' EXIT
+        curl -fsSL -o "$tmp/$file" "$base/$file"
+        sum="$(curl -fsSL "$base/manifest.json" \
+          | awk -v key="\"$file\":" '$1 == key { getline; gsub(/[",]/, ""); print $2; exit }')"
+        [ -n "$sum" ] || { echo "zeron: no sha256 for $file in manifest" >&2; exit 1; }
+        echo "$sum  $tmp/$file" | sha256sum -c -
+        tar -xzf "$tmp/$file" -C "$tmp"
+        "$tmp/zeron-$version-linux-$arch/install.sh"
+      version_hint: latest
+    headless:
+      type: shell
+      summary: >-
+        Official zeron.sh installer for servers: no desktop entry, runs
+        `zeron headless` as a systemd user service and enables linger so it
+        survives logout.
+      run: curl -fsSL https://zeron.sh/install.sh | sh
+      version_hint: latest
+category: development
+tags: [ai, agents, gui]
+homepage: https://zeron.sh
+system_requires: [curl]
+provides:
+  binaries: [zeron]

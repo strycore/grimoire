@@ -1,0 +1,42 @@
+name: armada
+summary: Armada, an open source, end-to-end encrypted Discord alternative built on Nostr.
+# The Soapbox flatpak remote only carries the app; its runtime
+# (org.freedesktop.Platform) comes from Flathub.
+requires: [flathub]
+verify: flatpak info buzz.armada.app >/dev/null 2>&1 || command -v armada
+# The flatpak ships no <release> metainfo yet, so it reports no version.
+version_check: |
+  if flatpak info buzz.armada.app >/dev/null 2>&1; then
+    flatpak info buzz.armada.app | awk '/^ *Version:/ {print $2; exit}'
+  else
+    dpkg-query -W -f='${Version}' armada-desktop 2>/dev/null
+  fi
+cast:
+  default: flatpak
+  channels:
+    flatpak:
+      type: flatpak
+      summary: Soapbox's flatpak remote (pkg.soapbox.pub), per-user (recommended).
+      run: |
+        flatpak remote-add --user --if-not-exists soapbox \
+          https://pkg.soapbox.pub/flatpak/soapbox.flatpakrepo
+        flatpak install -y --user soapbox buzz.armada.app
+      version_hint: latest
+    apt:
+      type: apt
+      summary: Soapbox's apt repo + armada-desktop package.
+      run: |
+        sudo apt-get install -y curl
+        sudo install -m 0755 -d /etc/apt/keyrings
+        curl -fsSL https://pkg.soapbox.pub/apt/key.asc \
+          | sudo tee /etc/apt/keyrings/soapbox.asc > /dev/null
+        sudo chmod a+r /etc/apt/keyrings/soapbox.asc
+        echo "deb [signed-by=/etc/apt/keyrings/soapbox.asc] https://pkg.soapbox.pub/apt stable main" \
+          | sudo tee /etc/apt/sources.list.d/soapbox.list > /dev/null
+        sudo apt-get update
+        sudo apt-get install -y armada-desktop
+      version_hint: latest
+      requires_sudo: true
+category: communication
+tags: [chat, voip, nostr, encrypted]
+homepage: https://soapbox.pub/armada

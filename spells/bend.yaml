@@ -1,0 +1,37 @@
+name: bend
+summary: Bend, a parallel functional language with laws and proofs (CPU + GPU).
+description: |
+  Bend 2 compiles Python-like, dependently typed code to fast native and GPU
+  executables, and checks `law` declarations (e.g. in LAWS.bend) by proof.
+  Run `bend guide` to get started. Building binaries needs clang 19+.
+
+  The installed `bend` pings bend-lang.com once a day for new versions
+  (version, OS and CPU type only); set BEND_NO_TELEMETRY=1 to turn it off.
+# The upstream installer drops everything in $BEND_HOME (~/.bend) and leaves
+# PATH alone, so the cast links bin/bend into ~/.local/bin. Check the install
+# dir directly too, so verify doesn't depend on the user's PATH.
+verify: |
+  command -v bend || test -x "${BEND_HOME:-$HOME/.bend}/bin/bend"
+version_check: |
+  bend_bin="$(command -v bend 2>/dev/null || echo "${BEND_HOME:-$HOME/.bend}/bin/bend")"
+  BEND_NO_TELEMETRY=1 "$bend_bin" version 2>/dev/null | awk '{print $2}'
+cast:
+  default: upstream
+  channels:
+    upstream:
+      type: shell
+      summary: >-
+        Official bend-lang.com installer (sha256-checked release tarball) into
+        ~/.bend, linked into ~/.local/bin. Re-cast to upgrade.
+      run: |
+        bend_home="${BEND_HOME:-$HOME/.bend}"
+        curl -fsSL https://bend-lang.com/install.sh | sh
+        mkdir -p "$HOME/.local/bin"
+        ln -sf "$bend_home/bin/bend" "$HOME/.local/bin/bend"
+      version_hint: latest
+category: development
+tags: [language, functional, parallel, gpu, proof-assistant]
+homepage: https://bend-lang.com
+system_requires: [curl]
+provides:
+  binaries: [bend]

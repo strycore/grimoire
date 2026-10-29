@@ -2,7 +2,7 @@
 
 Declarative state for personal Linux desktops — share, version, and cast YAML spells.
 
-> Status: alpha. 99 spells, runs on Fedora / Debian-Ubuntu / Arch families. Cast / scry / requires / manifests / multi-distro all work; `scribe`, update probes, and an AUR channel type are not yet implemented.
+> Status: alpha. 101 spells, runs on Fedora / Debian-Ubuntu / Arch families. Cast / scry / requires / manifests / multi-distro all work; `scribe`, update probes, and an AUR channel type are not yet implemented.
 
 ## What it is
 

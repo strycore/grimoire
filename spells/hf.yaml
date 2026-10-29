@@ -1,0 +1,26 @@
+name: hf
+summary: Hugging Face Hub CLI — download and upload models, datasets and Spaces, manage auth and cache.
+verify: command -v hf
+# `hf --version` prints the bare version on both 1.x and 2.x; `hf version`
+# changed its output format between majors.
+version_check: hf --version 2>/dev/null | head -n1
+cast:
+  default: upstream
+  channels:
+    upstream:
+      type: shell
+      summary: Official standalone installer (isolated venv in ~/.hf-cli, wrapper in ~/.local/bin).
+      # --exclude-skill: the installer otherwise also drops an AI-agent skill
+      # into the user's agent configs, which is out of scope for this spell.
+      run: curl -LsSf https://hf.co/cli/install.sh | bash -s -- --exclude-skill
+      version_hint: latest
+    pip:
+      type: pip
+      summary: Install via pip (ships with the huggingface_hub package).
+      run: pip install --user -U huggingface_hub
+      version_hint: latest
+category: development
+tags: [ai, ml, huggingface, models, datasets, cli]
+homepage: https://huggingface.co/docs/huggingface_hub/guides/cli
+provides:
+  binaries: [hf]

@@ -1,0 +1,28 @@
+name: ccsessions
+summary: Terminal UI for browsing, previewing, resuming and managing Claude Code sessions.
+verify: command -v ccsessions
+# ccsessions has no --version flag (any argument just opens the TUI), so ask
+# the interpreter behind the entry-point script for the package metadata. This
+# works the same for uv tool, pipx and plain pip installs.
+version_check: |
+  script="$(readlink -f "$(command -v ccsessions)")"
+  python="$(head -n 1 "$script" | sed 's/^#!//')"
+  "$python" -c 'from importlib.metadata import version; print(version("ccsessions-tui"))' 2>/dev/null
+cast:
+  default: uv
+  channels:
+    uv:
+      type: pip
+      summary: Isolated install from PyPI with `uv tool` (wrapper in ~/.local/bin).
+      run: uv tool install --upgrade ccsessions-tui
+      version_hint: latest
+    pipx:
+      type: pip
+      summary: Isolated install from PyPI with pipx.
+      run: pipx install ccsessions-tui
+      version_hint: latest
+category: development
+tags: [ai, claude-code, sessions, tui, cli, python]
+homepage: https://github.com/miskiewiczm/ccsessions
+provides:
+  binaries: [ccsessions]

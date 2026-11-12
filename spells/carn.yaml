@@ -1,0 +1,44 @@
+name: carn
+summary: Terminal UI for browsing, searching and managing local Claude Code and Codex session archives.
+verify: command -v carn
+version_check: carn --version 2>/dev/null | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | head -n 1
+cast:
+  default: user
+  channels:
+    user:
+      type: shell
+      summary: Latest GitHub release tarball into ~/.local/bin (no sudo, checksum-verified).
+      run: |
+        case "$(uname -m)" in
+          x86_64) arch=amd64 ;;
+          aarch64|arm64) arch=arm64 ;;
+          *) echo "carn: unsupported architecture $(uname -m)" >&2; exit 1 ;;
+        esac
+        mkdir -p "$HOME/.local/bin"
+        tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT
+        url=$(curl -s https://api.github.com/repos/rkuska/carn/releases/latest \
+              | grep -oE "\"browser_download_url\": \"[^\"]+linux_${arch}\.tar\.gz\"" \
+              | head -n 1 \
+              | sed -E 's/.*"(http[^"]+)"$/\1/')
+        if [ -z "$url" ]; then
+          echo "Couldn't find a carn linux_${arch} tarball URL on GitHub releases" >&2
+          exit 1
+        fi
+        file=$(basename "$url")
+        curl -fL -o "$tmp/$file" "$url"
+        curl -fsSL -o "$tmp/checksums.txt" "${url%/*}/checksums.txt"
+        (cd "$tmp" && grep " $file\$" checksums.txt | sha256sum -c -)
+        tar -xzf "$tmp/$file" -C "$tmp" carn
+        install -m 0755 "$tmp/carn" "$HOME/.local/bin/carn"
+      version_hint: latest
+    go:
+      type: shell
+      summary: Build from source with `go install` (needs Go 1.25.2+; lands in $GOBIN or ~/go/bin, reports its version as `dev`).
+      run: go install github.com/rkuska/carn@latest
+      version_hint: latest
+category: development
+tags: [ai, claude-code, codex, sessions, tui, cli]
+homepage: https://github.com/rkuska/carn
+system_requires: [curl]
+provides:
+  binaries: [carn]

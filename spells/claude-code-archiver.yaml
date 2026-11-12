@@ -1,0 +1,25 @@
+name: claude-code-archiver
+summary: Terminal UI to archive old Claude Code conversations and free up disk space.
+verify: command -v claude-code-archiver
+version_check: |
+  npm ls -g --depth=0 claude-code-archiver 2>/dev/null \
+    | grep -oE 'claude-code-archiver@[0-9][^ ]*' \
+    | head -n 1 \
+    | cut -d@ -f2
+cast:
+  default: npm
+  channels:
+    npm:
+      type: npm
+      # Not published to the npm registry and upstream cuts no releases: this
+      # installs the prebuilt bundle committed on the default branch. Use the
+      # tarball URL rather than `github:skydiver/...`: npm links a global git
+      # dependency to a temporary clone in its cache, leaving a dangling bin.
+      summary: Global npm install straight from the GitHub repo (requires Node.js 22+).
+      run: npm install -g https://github.com/skydiver/claude-code-archiver/archive/HEAD.tar.gz
+      version_hint: latest
+category: development
+tags: [ai, claude-code, sessions, archive, tui, cli]
+homepage: https://github.com/skydiver/claude-code-archiver
+provides:
+  binaries: [claude-code-archiver]

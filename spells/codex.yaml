@@ -1,0 +1,25 @@
+name: codex
+summary: OpenAI's Codex CLI — a coding agent that runs locally in your terminal.
+verify: command -v codex
+version_check: codex --version 2>/dev/null | head -n 1 | awk '{print $NF}'
+cast:
+  default: upstream
+  channels:
+    upstream:
+      type: shell
+      summary: Official standalone installer from chatgpt.com (binary in ~/.local/bin, no Node.js needed).
+      # CODEX_NON_INTERACTIVE: the installer otherwise prompts (e.g. to launch
+      # codex when it finishes), which would hang an unattended cast.
+      run: curl -fsSL https://chatgpt.com/codex/install.sh | CODEX_NON_INTERACTIVE=1 sh
+      version_hint: latest
+    npm:
+      type: npm
+      summary: Global npm install (requires Node.js).
+      run: npm install -g @openai/codex
+      version_hint: latest
+category: development
+tags: [ai, cli, coding-assistant, openai]
+homepage: https://developers.openai.com/codex/cli
+system_requires: [curl]
+provides:
+  binaries: [codex]
